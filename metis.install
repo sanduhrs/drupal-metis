@@ -1,0 +1,98 @@
+<?php
+// $Id: metis.install,v 1.0 2010/11/13 04:59:06 yan Exp $
+
+/**
+ * @file
+ * Schema definitions install/update/uninstall hooks.
+ */
+
+
+/**
+  * Implementation of hook_install().
+  */
+
+function metis_install() {
+
+  // Use schema API to create database table.
+  drupal_install_schema('metis');
+  drupal_load('module', 'content');
+  content_notify('install', 'metis');
+
+}
+
+/**
+  * Implementation of hook_uninstall().
+  */
+
+function metis_uninstall() {
+
+  // Use schema API to delete database table.
+  drupal_uninstall_schema('metis');
+  drupal_load('module', 'content');
+  content_notify('uninstall', 'metis');
+
+  // Delete our module's variable from the variables table.
+  variable_del('metis_cck_field');
+
+}
+
+/**
+  * Implementation of hook_enable().
+  *
+  * Notify content module when this module is enabled.
+  */
+
+function metis_enable() {
+
+  drupal_load('module', 'content');
+  content_notify('enable', 'metis');
+
+}
+
+/**
+  * Implementation of hook_disable().
+  *
+  * Notify content module when this module is disabled.
+  */
+
+function metis_disable() {
+
+  drupal_load('module', 'content');
+  content_notify('disable', 'metis');
+
+}
+
+/**
+  * Implementation of hook_schema().
+  */
+
+function metis_schema() {
+
+  $schema = array();
+  $schema['metis'] = array(
+    'description' => t('Stores codes to use with the METIS pixel.'),
+    'fields' => array(
+      'code' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'ident' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'used' => array(
+        'type' => 'int',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => 0
+      ),
+    ),
+  );
+
+  return $schema;
+
+}
