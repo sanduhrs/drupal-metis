@@ -1,4 +1,6 @@
 <?php
+// $Id: metis_cck_inject_allowed.inc,v 1.0 2010/11/13 14:49:21 yan Exp $
+
 /**
  * @file
  * Allowed values for the CCK field
