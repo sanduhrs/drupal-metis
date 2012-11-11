@@ -314,7 +314,7 @@ function metis_set_used($code_public, $nid) {
               WHERE code_public = '%s'
               AND used=0";
 
-      db_query($query, $nid, $code_public); // TODO: This doesn't work - maybe because of double codes in db
+      db_query($query, $nid, $code_public);
 
       // Set watchdog message if db has been updated
       if (db_affected_rows() != 0) watchdog('metis', t('Code %public_code has been set as "used" by node %nid.'), array('%public_code' => $code_public, '%nid' => $nid));
@@ -387,23 +387,7 @@ function metis_field_access($op, $field, $account = NULL, $node = NULL) {
 function metis_field_settings($op, $field) {
   switch ($op) {
 
-    // Create the form element to be used on the field
-    // settings form. Field settings will be the same for
-    // all shared instances of the same field and should
-    // define the way the value will be stored
-    // in the database.
-
-    //case 'form':
-
-    //case 'save':
-
-    // Define the database storage for this field using
-    // the same construct used by schema API. Most fields
-    // have only one column, but there can be any number
-    // of different columns. After the schema API values,
-    // add two optional values to each column,
-    //  'views', to define a Views field
-    //  'sortable', to add a Views sort field
+    // Define the database storage for the field.
 
     case 'database columns':
 
@@ -433,21 +417,14 @@ function metis_field_settings($op, $field) {
 
       return $columns;
 
-    // Optional: Make changes to the default $data array
-    // created for Views. Omit this if no changes are
-    // needed, use it to add a custom handler or make
-    // other changes.
+    // Prepare field for views.
+
     case 'views data':
-      // Start with the $data created by CCK
-      // and alter it as needed. The following
-      // code illustrates how you would retrieve
-      // the necessary data.
 
       $data = content_views_field_views_data($field);
       $db_info = content_database_info($field);
       $table_alias = content_views_tablename($field);
       $field_data = $data[$table_alias][$field['field_name'] .'_value'];
-      // Make changes to $data as needed here.
 
       return $data;
   }
@@ -456,13 +433,9 @@ function metis_field_settings($op, $field) {
 /**
   * Implementation of hook_field().
   */
+
 function metis_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
-    // Do validation on the field values here. The widget
-    // will do its own validation and you cannot make any
-    // assumptions about what kind of widget has been used,
-    // so don't validate widget values, only field values.
-    //case 'validate':
 
     case 'presave':
 
@@ -484,11 +457,6 @@ function metis_field($op, &$node, $field, &$items, $teaser, $page) {
 
     break;
 
-    // This is where you make sure that user-provided
-    // data is sanitized before being displayed.
-    case 'sanitize':
-      break;
-
     case 'insert':
 
       // Set code as used after node is saved
@@ -509,10 +477,15 @@ function metis_field($op, &$node, $field, &$items, $teaser, $page) {
   */
 
 function metis_content_is_empty($item, $field) {
+
   if (empty($item['code_public'])) {
+
     return TRUE;
+
   }
+
   return FALSE;
+
 }
 
 /***
@@ -532,25 +505,28 @@ function metis_content_is_empty($item, $field) {
   */
 
 function metis_widget_info() {
+
   return array(
+
     // The machine name of the widget, no more than 32 characters.
     'code_widget' => array(
+
       // The human-readable label of the field that will be
       // seen in the Manage fields screen.
       'label' => t('Metis widget'),
+
       // An array of the field types this widget can be used with.
       'field types' => array('metis'),
+
       // Who will handle multiple values, default is core.
       // 'CONTENT_HANDLE_MODULE' means the module does it.
-      // See optionwidgets for an example of a module that
-      // handles its own multiple values.
       'multiple values' => CONTENT_HANDLE_CORE,
+
       'callbacks' => array(
+
         // Who will create the default value, default is core.
-        // 'CONTENT_CALLBACK_CUSTOM' means the module does it.
-        // 'CONTENT_CALLBACK_NONE' means this widget has
-        // no default value.
         'default value' => CONTENT_CALLBACK_DEFAULT,
+
       ),
     ),
   );
@@ -572,6 +548,7 @@ function metis_elements() {
 
   return $elements;
 }
+
 
 /**
   * Implementation of hook_process().
@@ -622,38 +599,6 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
 
 /**
   * Implementation of hook_widget().
-  *
-  * Attach a single form element to the form.
-  *
-  * CCK core fields only add a stub element and builds
-  * the complete item in #process so reusable elements
-  * created by hook_elements can be plugged into any
-  * module that provides valid $field information.
-  *
-  * Custom widgets that don't care about using hook_elements
-  * can be built out completely at this time.
-  *
-  * If there are multiple values for this field and CCK is
-  * handling multiple values, the content module will call
-  * this function as many times as needed.
-  *
-  * @param $form
-  *   the entire form array,
-  *   $form['#node'] holds node information
-  * @param $form_state
-  *   the form_state,
-  *   $form_state['values'][$field['field_name']]
-  *   holds the field's form values.
-  * @param $field
-  *   the field array
-  * @param $items
-  *   array of default values for this field
-  * @param $delta
-  *   the order of this item in the array of
-  *   subelements (0, 1, 2, etc)
-  *
-  * @return
-  *   the form item for a single element for this field
   */
 
 function metis_widget(&$form, &$form_state, $field, $items, $delta = 0) {
@@ -708,21 +653,20 @@ function theme_code_widget($element) {
   */
 
 function metis_field_formatter_info() {
+
   return array(
+
     // The machine name of the formatter.
     'default' => array(
+
       // The human-readable label shown on the Display
       // fields screen.
       'label' => t('Metis pixel as <img>'),
+
       // An array of the field types this formatter
       // can be used on.
       'field types' => array('metis'),
-      // CONTENT_HANDLE_CORE:   CCK will pass the formatter
-      // a single value.
-      // CONTENT_HANDLE_MODULE: CCK will pass the formatter
-      // an array of all the values. None of CCK's core
-      // formatters use multiple values, that is an option
-      // available to other modules that want it.
+
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
 
@@ -782,7 +726,7 @@ function metis_theme() {
 }
 
 /**
-  * Theme function for 'default' metis field formatter.
+  * Theme function for field formatters.
   *
   * $element['#item']: the sanitized $delta value for the item,
   * $element['#field_name']: the field name,
