@@ -12,7 +12,7 @@
 
 function metis_perm() {
 
-  return array('administer metis module', 'add metis codes to node', 'add new metis codes');
+  return array('administer metis module', 'add metis codes to nodes', 'add new metis codes');
 
 }
 
@@ -360,6 +360,26 @@ function metis_field_info() {
     ),
   );
 }
+
+
+/**
+  * Implementation of hook_field_access().
+  */
+
+function metis_field_access($op, $field, $account = NULL, $node = NULL) {
+
+  switch ($op) {
+
+    case 'edit':
+      return user_access('add metis codes to nodes', $account);
+    break;
+
+  }
+
+  return TRUE;
+
+}
+
 
 /**
   * Implementation of hook_field_settings().
