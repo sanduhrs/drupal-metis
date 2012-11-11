@@ -2,4 +2,5 @@ name = Metis
 description = Include the METIS pixel for VG Wort counts
 dependencies[] = content
 dependencies[] = text
+dependencies[] = optionwidgets
 core = 6.x

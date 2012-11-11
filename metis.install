@@ -70,15 +70,15 @@ function metis_schema() {
   $schema['metis'] = array(
     'description' => t('Stores codes to use with the METIS pixel.'),
     'fields' => array(
-      'code' => array(
+      'code_public' => array(
         'type' => 'varchar',
-        'length' => 128,
+        'length' => 32,
         'not null' => TRUE,
         'default' => ''
       ),
-      'ident' => array(
+      'code_private' => array(
         'type' => 'varchar',
-        'length' => 128,
+        'length' => 32,
         'not null' => TRUE,
         'default' => ''
       ),
@@ -92,5 +92,41 @@ function metis_schema() {
   );
 
   return $schema;
+
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+
+function metis_requirements($phase) {
+
+  $requirements = array();
+  $t = get_t();
+
+  switch ($phase) {
+
+  case 'runtime':
+
+    $unused = metis_count_unused();
+
+    if ($unused == 0) {
+      $severity = REQUIREMENT_ERROR;
+      $value = t('There are no unused codes left.');
+    }
+    else {
+      $severity = REQUIREMENT_OK;
+      $value = t('There are %count_codes unused codes left.', array('%count_codes' => $unused));
+    }
+    $requirements['metis_dependencies'] = array(
+        'title' => t('Metis'),
+        'severity' => $severity,
+        'value' => $value,
+      );
+    break;
+
+  }
+
+  return $requirements;
 
 }

@@ -1,14 +1,23 @@
 <?php
-/**
- * @file
- * The metis module
- *
- * Allows you to add the VG Wort mtis pixel to nodes
- */
+/***
+   * @file
+   * The metis module
+   *
+   * Allows you to add the VG Wort mtis pixel to nodes
+   */
 
+/**
+  * Implementation of hook_perm().
+  */
+
+function metis_perm() {
+
+  return array('administer metis module', 'add metis codes to node', 'add new metis codes');
+
+}
 
 /**
-  * Define menu entries
+  * Implementation of hook_menu().
   */
 
 function metis_menu() {
@@ -20,8 +29,14 @@ function metis_menu() {
     'description' => t('Metis settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('metis_settings_form'),
-    'access arguments' => array('access administration pages'),
-    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer metis module'),
+  );
+
+  // Set default for tabs
+  $items['admin/settings/metis/settings'] = array(
+    'title' => t('Metis settings'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10
   );
 
   $items['admin/settings/metis/add'] = array(
@@ -29,9 +44,22 @@ function metis_menu() {
     'description' => t('Add metis codes'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('metis_codes_form'),
-    'access arguments' => array('access administration pages'),
-    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('add new metis codes'),
+    'type' => MENU_LOCAL_TASK,
   );
+
+  if (module_exists('views')) {
+
+    $items['admin/settings/metis/list'] = array(
+      'title' => t('List metis codes'),
+      'description' => t('List used metis codes'),
+      'page callback' => 'views_page',
+      'page arguments' => array('metis'),
+      'access arguments' => array('administer metis module'),
+      'type' => MENU_LOCAL_TASK,
+    );
+
+  }
 
   return $items;
 }
@@ -47,7 +75,7 @@ function metis_help($path, $arg) {
 
     // Main module help
     case 'admin/settings/metis':
-      return '<p>' . t('The Metis module allows you to automatically insert the metis pixel provided by <a href="http://www.vgwort.de/">VG Wort</a>.') . '</p><p>' . t('To use the module you need to') . '</p><ol><li>' . t('Add a CCK select list field to your node types and then select it on this page') . '</li><li>' . t('Set the display settings of that field to "metis" for full node view') . '</li></ol>';
+      return '<p>' . t('The Metis module allows you to automatically insert the metis pixel provided by <a href="http://www.vgwort.de/">VG Wort</a>. To use the module you need to add a CCK Metis field to your content types.') . '</p>';
 
   }
 }
@@ -59,38 +87,22 @@ function metis_help($path, $arg) {
 
 function metis_settings_form() {
 
-  // Get CCK fields
-  $fields = content_fields();
-
-  // Add empty option
-  $options = array(NULL => 'None');
-
-  foreach ($fields as $field) {
-
-    // Show only fields with select list
-    if ($field['widget']['type'] == 'optionwidgets_select') {
-      $options[$field['field_name']] = $field['widget']['label'] . ' (' . $field['field_name'] . ')';
-    }
-
-  }
-
-  // Define a textarea
-  $form['metis_cck_field'] = array(
-    '#type' => 'select',
-    '#required' => FALSE,
-    '#title' => t('Select a field'),
-    '#description' => t('Please select an existing CCK field (must be select list)'),
-    '#default_value' => variable_get('metis_cck_field', array()),
-    '#options'  => $options,
-  );
-
   // Define a textfield for the server setting
   $form['metis_server'] = array(
     '#type' => 'textfield',
     '#title' => t('Metis server'),
-    '#default_value' => variable_get('metis_server', 'vg01.met.vgwort.de'),
-    '#description' => t('Change the server to be used)'),
+    '#default_value' => variable_get('metis_server', 'example.com'),
+    // '#default_value' => variable_get('metis_server', 'vg01.met.vgwort.de'),
+    // TODO: Add check or select list
+    '#description' => t('Change the server to be used'),
     '#required' => TRUE,
+    '#weight' => -2,
+  );
+
+  $form['status'] = array(
+    '#type' => 'markup',
+    '#value' => '<p>' . t('<strong>Status:</strong> There are currently %count_codes unused codes left.', array('%count_codes' => $unused = metis_count_unused())) . '</p>',
+    '#weight' => -3,
   );
 
   return system_settings_form($form);
@@ -108,7 +120,7 @@ function metis_codes_form() {
   $form['code'] = array(
     '#type' => 'textarea',
     '#title' => t('Metis code'),
-    '#description' => t('Please enter Metis codes you want to save in the format [code];[ident]. <strong>One per line. Every code and every ident must be 32 letters long.</strong>'),
+    '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code and every ident must be 32 letters long.</strong>'),
     '#cols' => 32,
     '#rows' => 20,
     '#required' => TRUE,
@@ -144,12 +156,37 @@ function metis_codes_form_validate($form, &$form_state) {
 
   foreach ($rows as $row) {
 
-    $items = explode(';', $row);
-    $code = $items[0];
-    $ident = $items[1];
+    $ignore = FALSE;
 
-    if (drupal_strlen(trim($code)) != 32) form_set_error('metis_codes', t("%c is not 32 letters long", array('%c' => $code)));
-    if (drupal_strlen(trim($ident)) != 32) form_set_error('metis_codes', t("%c is not 32 letters long", array('%c' => $ident)));
+    $pattern = array('Öffentlicher', 'Identifikationscode', 'Privater', 'VG Wort');
+
+    foreach($pattern as $needle) {
+
+      if (stripos($row, $needle)) $ignore = TRUE;
+
+    } 
+
+    if (!$ignore) {
+
+      $items = explode(';', $row);
+      $code_public = $items[0];
+      $code_private = $items[1];
+
+      if (drupal_strlen(trim($code_public)) != 32) form_set_error('metis_codes', t('Public code %c is not 32 letters long', array('%c' => $code_public)));
+
+      if (drupal_strlen(trim($code_private)) != 32) form_set_error('metis_codes', t('Private code %c is not 32 letters long', array('%c' => $code_private)));
+
+      // Check if code is already in db
+      $query = "SELECT code_public
+                FROM metis
+                WHERE code_public = '%s'";
+
+      $row = db_query($query, $code_public);
+
+      // If code is already in db, throw an error
+      if ($row->num_rows > 0) form_set_error('metis_codes', t("Public code %c is already in database.", array('%c' => $code_public)));
+
+    }
 
   }
 
@@ -163,6 +200,10 @@ function metis_codes_form_validate($form, &$form_state) {
 
 function metis_codes_form_submit($form, $form_state) {
 
+  // Define variables
+  $count_ignores = 0;
+  $count_saves = 0;
+
   // Get rid of white spaces
   $input = trim($form_state['values']['code']);
 
@@ -174,246 +215,631 @@ function metis_codes_form_submit($form, $form_state) {
 
   $codes = array();
 
-  // Implode values for the confirmation message
-  //$codes_print = implode('<br />', $codes);
-
   // Write codes to database
   foreach ($rows as $row) {
 
-    $items = explode(';', $row);
-    $code = $items[0];
-    $ident = $items[1];
+    $ignore = FALSE;
 
-    // CHECK NEEDS TO BE ADDED TO MAKE SURE THAT CODE DOESN'T EXIST ALREADY
+    // Ignore some rows
+    $pattern = array('Öffentlicher', 'Identifikationscode', 'Privater', 'VG Wort');
 
-    // Write to database
-    db_query("INSERT INTO {metis} (code, ident) VALUES ('%s', '%s')", str_replace("\r", '', $code), str_replace("\r", '', $ident));
+    foreach($pattern as $needle) {
 
-    // Set confirmation message
-    drupal_set_message('Saved code ' . $code . ' with ident ' . $ident);
-  }
+      if (stripos($row, $needle)) {
 
-}
-
-
-/**
-  * Implementation of hook_form_alter().
-  * To disable the select list once a code has been selected
-  * From http://drupal.org/node/357328
-  */
-
-function metis_form_alter(&$form, $form_state, $form_id) {
-
-  // Get field
-  $field = variable_get('metis_cck_field', NULL);
-
-  if ($field) {
-
-    if (isset($form['#node']->{$field}[0]['value']) && isset($form['type']) && isset($form['#node'])) {
-
-      // Use this check to match node edit form for any content type.
-      if ($form['type']['#value'] .'_node_form' == $form_id) {
-        $form['#after_build'][] = '_metis_after_build';
-      }
-
-      // Use this check to match node edit form for a particular content type.
-      // if ('mytype_node_form' == $form_id) {
-      //   $form['#after_build'][] = '_metis_after_build';
-      // }
-
-    }
-  }
-
-  // Inject PHP allowed values into field
-  // module_load_include('inc', 'metis', 'cck_inject_allowed');
-  // require_once ./metis_cck_inject_allowed.inc;
-  $form['#field_info'][$field]['allowed_values_php'] = '
-    $field = variable_get(\'metis_cck_field\', NULL); // The machine readable name of the field
-    $options = array();
-
-    // Check if node already has a code set in this field on node edit
-    if (arg(0) == \'node\' && is_numeric(arg(1)) && arg(2) == \'edit\'){
-
-      $node = node_load(' . $form['nid']['#value'] . ');
-
-      if ($node->{$field}[0][\'value\']) {
-
-        // If code is set, use it and exit
-        $options[$node->{$field}[0][\'value\']] = t(\'Embed Metis code\') . \' (\' . $node->{$field}[0][\'value\'] . \')\';
-
-        return $options;
+        $ignore = TRUE;
+        $count_ignores++; // Count ignored rows
 
       }
 
     }
 
-    if (!$node->{$field}[0][\'value\']) {
+    if (!$ignore) {
 
-      $db_field = content_fields($field);
-      $db_info = content_database_info($db_field);
+      $items = explode(';', $row);
+      $code_public = $items[0];
+      $code_private = $items[1];
 
-      if ($db_info[\'columns\'][\'value\'][\'column\']) {
+      // Write to database
+      db_query("INSERT INTO {metis} (code_public, code_private) VALUES ('%s', '%s')", str_replace("\r", '', $code_public), str_replace("\r", '', $code_private));
 
-        $query = "SELECT metis.code
-                  FROM metis
-                  LEFT JOIN %s ON ( %s.%s = metis.code )
-                  WHERE metis.used = 0
-                  AND %s.%s IS NULL
-                  LIMIT 1";
+      $count_saves++; // Count saved codes
 
-
-        $row = db_fetch_object(db_query($query, $db_info[\'table\'], $db_info[\'table\'], $db_info[\'columns\'][\'value\'][\'column\'], $db_info[\'table\'], $db_info[\'columns\'][\'value\'][\'column\']));
-        $options[$row->code] = t(\'Embed Metis code\') . \' (\' . $row->code . \')\';
-
-      }
     }
 
-    return $options;
-  ';
-
-}
-
-
-/**
-  * Custom after_build callback handler.
-  * To disable the select list once a code has been selected
-  */
-
-function _metis_after_build($form, &$form_state) {
-
-  $field = variable_get('metis_cck_field', NULL);
-
-  if ($field) {
-
-    // Use this one if the field is placed on top of the form.
-    _metis_fix_disabled($form[$field]);
-
-    // Use this one if the field is placed inside a fieldgroup.
-    // _metis_fix_disabled($form['group_mygroup'][$form[$field]]);
-
   }
 
-  return $form;
+  // Set confirmation message
+  drupal_set_message(t('%count_ignores lines have been ignored.', array('%count_ignores' => $count_ignores)));
+
+  drupal_set_message(t('%count_saves codes have been saved.', array('%count_saves' => $count_saves)));
 
 }
 
+function metis_count_unused() {
 
-/**
-  * Recursively set the disabled attribute of a CCK field
-  * and all its dependent FAPI elements.
-  */
+  // Select an unused code from db
+  $query = "SELECT code_public
+            FROM metis
+            WHERE used = 0";
 
-function _metis_fix_disabled(&$elements) {
+  $row = db_query($query);
 
-  foreach (element_children($elements) as $key) {
-    if (isset($elements[$key]) && $elements[$key]) {
+  return $row->num_rows;
 
-      // Recurse through all children elements.
-      _metis_fix_disabled($elements[$key]);
+}
+
+function metis_get_unused() {
+
+  // Select an unused code from db
+  $query = "SELECT code_public, code_private
+            FROM metis
+            WHERE used = 0";
+
+  $row = db_query($query);
+
+  // If there are no unused codes, return FALSE
+  if ($row->num_rows == 0) {
+
+    return FALSE;
+
+  // If there are unused codes, return an array with public and private code
+  }
+  else {
+
+    $data = db_fetch_object($row);
+    return array('code_public' => $data->code_public, 'code_private' => $data->code_private);
+
+  }
+}
+
+
+function metis_set_used($code_public, $nid) {
+
+  // Check if code has 32 characters and nid is present
+  if (drupal_strlen($code_public) == 32 && is_numeric($nid)) {
+
+    // Check if code is already set as used
+    $query = "SELECT used
+              FROM metis
+              WHERE code_public = '%s'
+              AND used>0";
+
+    $row = db_query($query, $code_public);
+
+    // If code is not set as used, set it
+    if ($row->num_rows == 0) {
+
+      // Update database and set used codes as used
+      $query="UPDATE metis
+              SET used='%s'
+              WHERE code_public = '%s'
+              AND used=0";
+
+      db_query($query, $nid, $code_public); // TODO: This doesn't work - maybe because of double codes in db
+
+      // Set watchdog message if db has been updated
+      if (db_affected_rows() != 0) watchdog('metis', t('Code %public_code has been set as "used" by node %nid.'), array('%public_code' => $code_public, '%nid' => $nid));
+
+      return TRUE;
+
     }
+
+    return FALSE;
+
+  }
+  else {
+
+    return FALSE;
+
   }
 
-  if (!isset($elements['#attributes'])) {
-    $elements['#attributes'] = array();
-  }
-  $elements['#attributes']['disabled'] = 'disabled';
+}
+
+/**
+  * Implementation of hook_views_api().
+  */
+
+function metis_views_api() {
+  return array(
+    'api' => 2.0,
+  );  
 }
 
 
+/***
+   * Define a CCK field
+   */
+
 /**
-  * Implementation of hook_field_formatter_info().
-  *
-  * Here we define an array with the options we will provide in display fields page
-  * The array keys will be used later in hook_theme and theme_
+  * Implementation of hook_field_info().
   */
-
-function metis_field_formatter_info() {
-
-  $formatters = array(
+function metis_field_info() {
+  return array(
     'metis' => array(
-      'label' => t('Include as a metis pixel'),
-      'field types' => array('text'),
-      'description' => t('Embeds the fields value as metis code.'),
+      'label' => t('Metis'),
+      'description' => t('VG Wort metis code'),
+    ),
+  );
+}
+
+/**
+  * Implementation of hook_field_settings().
+  */
+function metis_field_settings($op, $field) {
+  switch ($op) {
+
+    // Create the form element to be used on the field
+    // settings form. Field settings will be the same for
+    // all shared instances of the same field and should
+    // define the way the value will be stored
+    // in the database.
+
+    //case 'form':
+
+    //case 'save':
+
+    // Define the database storage for this field using
+    // the same construct used by schema API. Most fields
+    // have only one column, but there can be any number
+    // of different columns. After the schema API values,
+    // add two optional values to each column,
+    //  'views', to define a Views field
+    //  'sortable', to add a Views sort field
+
+    case 'database columns':
+
+      $columns['code_public'] = array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'sortable' => TRUE,
+        'views' => TRUE,
+      );
+
+      $columns['code_private'] = array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+        'sortable' => TRUE,
+        'views' => TRUE,
+      );
+
+      $columns['show'] = array(
+        'type' => 'int',
+        'length' => 1,
+        'not null' => FALSE,
+        'sortable' => TRUE,
+        'views' => TRUE,
+      );
+
+      return $columns;
+
+    // Optional: Make changes to the default $data array
+    // created for Views. Omit this if no changes are
+    // needed, use it to add a custom handler or make
+    // other changes.
+    case 'views data':
+      // Start with the $data created by CCK
+      // and alter it as needed. The following
+      // code illustrates how you would retrieve
+      // the necessary data.
+
+      $data = content_views_field_views_data($field);
+      $db_info = content_database_info($field);
+      $table_alias = content_views_tablename($field);
+      $field_data = $data[$table_alias][$field['field_name'] .'_value'];
+      // Make changes to $data as needed here.
+
+      return $data;
+  }
+}
+
+/**
+  * Implementation of hook_field().
+  */
+function metis_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    // Do validation on the field values here. The widget
+    // will do its own validation and you cannot make any
+    // assumptions about what kind of widget has been used,
+    // so don't validate widget values, only field values.
+    //case 'validate':
+
+    case 'presave':
+
+      // Get an unused code
+      $unused = metis_get_unused();
+
+      // Check if a public code is set already
+      // If not and the "show" option is selected, add a new one
+      if ($unused && empty($items[0]['code_public']) && $items[0]['show'] == 1) {
+
+        if (is_array($unused)) {
+
+          $items[0]['code_public'] = $unused['code_public'];
+          $items[0]['code_private'] = $unused['code_private'];
+
+        }
+
+      }
+
+    break;
+
+    // This is where you make sure that user-provided
+    // data is sanitized before being displayed.
+    case 'sanitize':
+      break;
+
+    case 'insert':
+
+      // Set code as used after node is saved
+      if ($items[0]['code_public']) metis_set_used($items[0]['code_public'], $node->nid);
+
+      break;
+  }
+}
+
+/**
+  * Implementation of hook_content_is_empty().
+  *
+  * CCK has no way to know if something like a zero is
+  * an empty value or a valid value, so return
+  * TRUE or FALSE to a populated field $item array.
+  * CCK uses this to remove empty multi-value elements
+  * from forms.
+  */
+
+function metis_content_is_empty($item, $field) {
+  if (empty($item['code_public'])) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/***
+   * Define a widget
+   */
+
+/**
+  * Implementation of hook_widget_info().
+  *
+  * Here we indicate that the content module will handle
+  * the default value and multiple values for these widgets.
+  *
+  * Callbacks can be omitted if default handing is used.
+  * They're included here just so this module can be used
+  * as an metis for custom modules that might do things
+  * differently.
+  */
+
+function metis_widget_info() {
+  return array(
+    // The machine name of the widget, no more than 32 characters.
+    'code_widget' => array(
+      // The human-readable label of the field that will be
+      // seen in the Manage fields screen.
+      'label' => t('Metis widget'),
+      // An array of the field types this widget can be used with.
+      'field types' => array('metis'),
+      // Who will handle multiple values, default is core.
+      // 'CONTENT_HANDLE_MODULE' means the module does it.
+      // See optionwidgets for an example of a module that
+      // handles its own multiple values.
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'callbacks' => array(
+        // Who will create the default value, default is core.
+        // 'CONTENT_CALLBACK_CUSTOM' means the module does it.
+        // 'CONTENT_CALLBACK_NONE' means this widget has
+        // no default value.
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+
+/**
+  * Implementation of hook_elements().
+  */
+
+function metis_elements() {
+
+  $elements = array('code_widget' =>
+    array(
+      '#input' => TRUE,
+      '#process' => array('metis_code_widget_process'),
     ),
   );
 
-  return $formatters;
+  return $elements;
+}
+
+/**
+  * Implementation of hook_process().
+  */
+
+function metis_code_widget_process($element, $edit, &$form_state, $form) {
+
+  $defaults = $element['#value'];
+  $field = content_fields($element['#field_name'], $element['#type_name']);
+
+  $element['code_public'] = array(
+    '#title' => t('Public code'),
+    '#type' => 'hidden',
+    '#default_value' => $defaults['code_public'],
+    '#weight' => 0,
+  );
+
+  $element['code_private'] = array(
+    '#title' => t('Private code'),
+    '#type' => 'hidden',
+    '#default_value' => $defaults['code_private'],
+    '#weight' => 1,
+  );
+
+  $element['show'] = array(
+    '#title' => t('Include public code in article (enable count)'),
+    '#type' => 'checkbox',
+    '#default_value' => $defaults['show'],
+    '#weight' => 1,
+  );
+
+  // Disable select field if there are no unused codes left
+  if (!$defaults['code_public'] && !$defaults['show'] && metis_get_unused() == FALSE) {
+
+    $element['show']['#disabled'] = 'disabled';
+    $element['show']['#description'] = '<span style="color:red">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</span>';
+
+  }
+  elseif ($defaults['code_public'] && $defaults['code_private']) {
+
+    $element['show']['#description'] = t('Public code: %code_public.<br /> Private code: %code_private.', array('%code_public' => $defaults['code_public'], '%code_private' => $defaults['code_private']));
+
+  }
+
+  return $element;
+}
+
+
+/**
+  * Implementation of hook_widget().
+  *
+  * Attach a single form element to the form.
+  *
+  * CCK core fields only add a stub element and builds
+  * the complete item in #process so reusable elements
+  * created by hook_elements can be plugged into any
+  * module that provides valid $field information.
+  *
+  * Custom widgets that don't care about using hook_elements
+  * can be built out completely at this time.
+  *
+  * If there are multiple values for this field and CCK is
+  * handling multiple values, the content module will call
+  * this function as many times as needed.
+  *
+  * @param $form
+  *   the entire form array,
+  *   $form['#node'] holds node information
+  * @param $form_state
+  *   the form_state,
+  *   $form_state['values'][$field['field_name']]
+  *   holds the field's form values.
+  * @param $field
+  *   the field array
+  * @param $items
+  *   array of default values for this field
+  * @param $delta
+  *   the order of this item in the array of
+  *   subelements (0, 1, 2, etc)
+  *
+  * @return
+  *   the form item for a single element for this field
+  */
+
+function metis_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+
+  $element = array(
+    '#type' => $field['widget']['type'],
+    '#default_value' => isset($items[$delta]) ? $items[$delta] : '',
+    '#field' => $field, // Needs to be added to display title with single value
+                        // http://poplarware.com/articles/cck_field_module#comment-3344
+  );
+
+  return $element;
 
 }
 
 
 /**
   * Implementation of hook_theme().
-  *
-  * We declare our theme functions according to the array keys in  hook_field_formatter_info
   */
 
-function metis_theme() {
+function theme_code_widget($element) {
 
-  $theme = array(
-    'metis_formatter_metis' => array(
-      'arguments' => array('element' => NULL),
-    ),
-  );
+  $output = $element['#children'];
 
-  return $theme;
+  // The following needs to be added to display title with single value
+  // http://poplarware.com/articles/cck_field_module#comment-3344
 
-}
+  if (empty($element['#field']['multiple'])) {
 
+    $output = '<label for="edit-field-metis-0-code-public-wrapper">' . $element['#field']['widget']['label'] . '</label>' . $output;
+    $output .= $element['#field']['widget']['description'];
 
-/**
-  * Theming functions for our formatters
-  *
-  * And here we do our magic. You can use dsm($element) to see what you have to play with (requires devel module).
-  */
-
-function theme_metis_formatter_metis($element) {
-
-  $server = variable_get('metis_server', 'vg01.met.vgwort.de');
-  $output = '<img src="/' . $server . '/na/' . $element['#item']['value'] . '" width="1" height="1" alt="">';
+  }
 
   return $output;
 
 }
 
-// Cron hook
-function metis_cron() {
 
-  metis_set_used();
+/***
+   * Define formatters
+   */
+
+/**
+  * Implementation of hook_field_formatter_info().
+  *
+  * All fields should have a 'default' formatter.
+  * Any number of other formatters can be defined as well.
+  * It's nice for there always to be a 'plain' option
+  * for the raw value, but that is not required.
+  *
+  */
+
+function metis_field_formatter_info() {
+  return array(
+    // The machine name of the formatter.
+    'default' => array(
+      // The human-readable label shown on the Display
+      // fields screen.
+      'label' => t('Metis pixel as <img>'),
+      // An array of the field types this formatter
+      // can be used on.
+      'field types' => array('metis'),
+      // CONTENT_HANDLE_CORE:   CCK will pass the formatter
+      // a single value.
+      // CONTENT_HANDLE_MODULE: CCK will pass the formatter
+      // an array of all the values. None of CCK's core
+      // formatters use multiple values, that is an option
+      // available to other modules that want it.
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+
+    'codes' => array(
+      'label' => t('Metis codes'),
+      'field types' => array('metis'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+
+    'code_public' => array(
+      'label' => t('Public metis code'),
+      'field types' => array('metis'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+
+    'code_private' => array(
+      'label' => t('Private metis code'),
+      'field types' => array('metis'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+
+    'show' => array(
+      'label' => t('Show metis pixel (yes/no)'),
+      'field types' => array('metis'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+  );
+}
+
+
+/**
+  * Implementation of hook_theme().
+  */
+
+function metis_theme() {
+  return array(
+    // Themes for the formatters.
+    'code_widget' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'metis_formatter_default' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'metis_formatter_codes' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'metis_formatter_code_public' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'metis_formatter_code_private' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'metis_formatter_show' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+
+/**
+  * Theme function for 'default' metis field formatter.
+  *
+  * $element['#item']: the sanitized $delta value for the item,
+  * $element['#field_name']: the field name,
+  * $element['#type_name']: the $node->type,
+  * $element['#formatter']: the $formatter_name,
+  * $element'#node']: the $node,
+  * $element['#delta']: the delta of this item, like '0',
+  *
+  */
+
+function theme_metis_formatter_default($element = NULL) {
+
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  // Get server
+  $server = variable_get('metis_server', NULL);
+
+  if($server && $element['#item']['show'] && !empty($element['#item']['code_public'])) {
+
+    return '<img class="metis_code_img" src="http://'. $server . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
+
+    // TODO: Hide in teaser
+    // TODO: Hide label
+  }
 
 }
 
-function metis_set_used() {
+function theme_metis_formatter_codes($element = NULL) {
 
-  // The machine readable name of the field
-  $field = variable_get('metis_cck_field', NULL);
-
-  if ($field) {
-
-    // CCK database information
-    $db_field = content_fields($field);
-    $db_info = content_database_info($db_field);
-
-    // Select used codes
-    $query = "SELECT metis.code
-              FROM metis
-              INNER JOIN %s
-              ON metis.code=%s.%s";
-
-    $result = db_query($query, $db_info['table'], $db_info['table'], $db_info['columns']['value']['column']);
-
-    while($row = db_fetch_object($result)) {
-
-      // Update database and set used codes as "used"
-      $query="UPDATE metis
-              SET used=1
-              WHERE code='%s'
-              AND used=0";
-
-      db_query($query, $row->code);
-
-      // Set watchdog message if db has been updated
-      if (db_affected_rows() != 0) watchdog('metis', t('Code %code has been set as "used".'), array('%code' => $row->code));
-    }
+  if (empty($element['#item'])) {
+    return '';
   }
+
+  return '<p><strong>Public code:</strong> '. $element['#item']['code_public'] . '<br /><strong>Private code:</strong> '. $element['#item']['code_private'] . '</p>';
+
+}
+
+function theme_metis_formatter_code_public($element = NULL) {
+
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  return $element['#item']['code_public'];
+
+}
+
+function theme_metis_formatter_code_private($element = NULL) {
+
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  return $element['#item']['code_private'];
+
+}
+
+function theme_metis_formatter_show($element = NULL) {
+
+  if (empty($element['#item'])) {
+    return '';
+  }
+
+  switch ($element['#item']['show']) {
+
+    case '0':
+      return t('no');
+    break;
+
+    case '1':
+      return t('yes');
+    break;
+
+  }
+
 }
