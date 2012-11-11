@@ -101,7 +101,7 @@ function metis_settings_form() {
 
   $form['status'] = array(
     '#type' => 'markup',
-    '#value' => '<p>' . t('<strong>Status:</strong> There are currently %count_codes unused codes left.', array('%count_codes' => $unused = metis_count_unused())) . '</p>',
+    '#value' => '<p>' . t('<strong>Status:</strong> There are currently %count_codes unused codes left.', array('%count_codes' => metis_count_unused())) . '</p>',
     '#weight' => -3,
   );
 
@@ -263,9 +263,7 @@ function metis_count_unused() {
             FROM metis
             WHERE used = 0";
 
-  $row = db_query($query);
-
-  return $row->num_rows;
+  return db_affected_rows(db_query($query));
 
 }
 
@@ -279,7 +277,7 @@ function metis_get_unused() {
   $row = db_query($query);
 
   // If there are no unused codes, return FALSE
-  if ($row->num_rows == 0) {
+  if (db_affected_rows($row) == 0) {
 
     return FALSE;
 
@@ -586,7 +584,7 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   );
 
   // Disable select field if there are no unused codes left
-  if (!$defaults['code_public'] && !$defaults['show'] && metis_get_unused() == FALSE) {
+  if (!$defaults['code_public'] && !$defaults['show'] && metis_count_unused() == 0) {
 
     $element['show']['#disabled'] = 'disabled';
     $element['show']['#description'] = '<span style="color:red">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</span>';
