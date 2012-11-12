@@ -54,15 +54,29 @@ function metis_menu() {
 
   if (module_exists('views')) {
 
-    $items['admin/settings/metis/list'] = array(
-      'title' => 'List metis codes',
-      'description' => 'List used metis codes',
-      'page callback' => 'views_page',
-      'page arguments' => array('metis'),
-      'access arguments' => array('administer metis module'),
-      'type' => MENU_LOCAL_TASK,
-    );
+    // Get metis field name(s).
+    $fields = content_fields();
+    $metis_fields = array();
 
+    // Select metis fields.
+    foreach ($fields as $field) {
+      if ($field['type'] == 'metis') {
+        $metis_fields[$field['field_name']]['field_name'] = $field['field_name'];
+        $metis_fields[$field['field_name']]['field_label'] = $field['widget']['label'];
+      }
+    }
+
+    // Create a menu entry for every metis field.
+    foreach ($metis_fields as $field) {
+      $items['admin/settings/metis/list_' . $field['field_name']] = array(
+        'title' => 'List codes (field: ' . $field['field_label'] . ')',
+        'description' => 'List used metis codes for field ' . $field['field_label'],
+        'page callback' => 'views_page',
+        'page arguments' => array('metis_' . $field['field_name']),
+        'access arguments' => array('administer metis module'),
+        'type' => MENU_LOCAL_TASK,
+      );
+    }
   }
 
   return $items;
