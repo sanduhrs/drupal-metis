@@ -40,4 +40,5 @@ Metis can be configured through the settings page at `admin/settings/metis`.
 
 Maintainers
 -----------
+
 - yan
