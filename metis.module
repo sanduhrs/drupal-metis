@@ -337,10 +337,10 @@ function metis_set_used($code_public, $nid) {
     if (db_affected_rows($row) == 0) {
 
       // Update database and set used codes as used.
-      $query="UPDATE metis
-              SET used = '%s'
-              WHERE code_public = '%s'
-              AND used = 0";
+      $query = "UPDATE metis
+                SET used = '%s'
+                WHERE code_public = '%s'
+                AND used = 0";
 
       db_query($query, $nid, $code_public);
 
@@ -441,8 +441,8 @@ function metis_field_settings($op, $field) {
 
       return $columns;
 
-    // Prepare field for views.
     case 'views data':
+      // Prepare field for views.
       $data = content_views_field_views_data($field);
       $db_info = content_database_info($field);
       $table_alias = content_views_tablename($field);
@@ -730,7 +730,6 @@ function metis_theme() {
  * $element['#formatter']: the $formatter_name,
  * $element'#node']: the $node,
  * $element['#delta']: the delta of this item, like '0',
- *
  */
 function theme_metis_formatter_default($element = NULL) {
 
@@ -796,6 +795,7 @@ function theme_metis_formatter_code_private($element = NULL) {
 
 /**
  * Theme function for field formatter show.
+ *
  * Shows wether the code is set to be shown.
  */
 function theme_metis_formatter_show($element = NULL) {
