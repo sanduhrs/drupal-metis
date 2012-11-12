@@ -9,7 +9,7 @@
  * Implements hook_views_default_views().
  */
 function metis_views_default_views() {
-  $view = new view;
+  $view = new view();
   $view->name = 'metis';
   $view->description = 'A list of nodes and their respective metis codes';
   $view->tag = '';
