@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Schema definitions install/update/uninstall hooks.
@@ -6,9 +7,8 @@
 
 
 /**
-  * Implementation of hook_install().
-  */
-
+ * Implements hook_install().
+ */
 function metis_install() {
 
   // Use schema API to create database table.
@@ -16,16 +16,15 @@ function metis_install() {
   drupal_load('module', 'content');
   content_notify('install', 'metis');
 
-  drupal_set_message(st('Metis settings are available under !link',
-    array( '!link' => l(st('Administer > Site configuration > Metis'),  'admin/settings/metis/settings'))
+  $t = get_t();
+  drupal_set_message($t('Metis settings are available under !link', array('!link' => l($t('Administer > Site configuration > Metis'),  'admin/settings/metis/settings'))
   ));
 
 }
 
 /**
-  * Implementation of hook_uninstall().
-  */
-
+ * Implements hook_uninstall().
+ */
 function metis_uninstall() {
 
   // Use schema API to delete database table.
@@ -39,11 +38,10 @@ function metis_uninstall() {
 }
 
 /**
-  * Implementation of hook_enable().
-  *
-  * Notify content module when this module is enabled.
-  */
-
+ * Implements hook_enable().
+ *
+ * Notify content module when this module is enabled.
+ */
 function metis_enable() {
 
   drupal_load('module', 'content');
@@ -52,11 +50,10 @@ function metis_enable() {
 }
 
 /**
-  * Implementation of hook_disable().
-  *
-  * Notify content module when this module is disabled.
-  */
-
+ * Implements hook_disable().
+ *
+ * Notify content module when this module is disabled.
+ */
 function metis_disable() {
 
   drupal_load('module', 'content');
@@ -65,32 +62,31 @@ function metis_disable() {
 }
 
 /**
-  * Implementation of hook_schema().
-  */
-
+ * Implements hook_schema().
+ */
 function metis_schema() {
 
   $schema = array();
   $schema['metis'] = array(
-    'description' => t('Stores codes to use with the METIS pixel.'),
+    'description' => 'Stores codes to use with the Metis pixel.',
     'fields' => array(
       'code_public' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'code_private' => array(
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
-        'default' => ''
+        'default' => '',
       ),
       'used' => array(
         'type' => 'int',
         'length' => 1,
         'not null' => TRUE,
-        'default' => 0
+        'default' => 0,
       ),
     ),
   );
@@ -100,9 +96,8 @@ function metis_schema() {
 }
 
 /**
- * Implementation of hook_requirements().
+ * Implements hook_requirements().
  */
-
 function metis_requirements($phase) {
 
   $requirements = array();
@@ -110,20 +105,19 @@ function metis_requirements($phase) {
 
   switch ($phase) {
 
-  case 'runtime':
+    case 'runtime':
+      $unused = metis_count_unused();
 
-    $unused = metis_count_unused();
-
-    if ($unused == 0) {
-      $severity = REQUIREMENT_ERROR;
-      $value = t('There are no unused codes left.');
-    }
-    else {
-      $severity = REQUIREMENT_OK;
-      $value = t('There are %count_codes unused codes left.', array('%count_codes' => $unused));
-    }
-    $requirements['metis_dependencies'] = array(
-        'title' => t('Metis'),
+      if ($unused == 0) {
+        $severity = REQUIREMENT_ERROR;
+        $value = $t('There are no unused codes left.');
+      }
+      else {
+        $severity = REQUIREMENT_OK;
+        $value = $t('There are %count_codes unused codes left.', array('%count_codes' => $unused));
+      }
+      $requirements['metis_dependencies'] = array(
+        'title' => $t('Metis'),
         'severity' => $severity,
         'value' => $value,
       );

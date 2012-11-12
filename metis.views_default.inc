@@ -1,9 +1,13 @@
 <?php
 
 /**
- * Implementation of hook_views_default_views().
+ * @file
+ * Default views for the metis module
  */
 
+/**
+ * Implementation of hook_views_default_views().
+ */
 function metis_views_default_views() {
  
   $view = new view;
