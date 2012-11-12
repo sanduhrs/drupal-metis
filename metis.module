@@ -203,7 +203,7 @@ function metis_codes_form_validate($form, &$form_state) {
 
       // Check if code is already in db.
       $query = "SELECT code_public
-                FROM metis
+                FROM {metis}
                 WHERE code_public = '%s'";
 
       $row = db_query($query, $code_public);
@@ -293,7 +293,7 @@ function metis_count_unused() {
 
   // Select an unused code from db.
   $query = "SELECT code_public
-            FROM metis
+            FROM {metis}
             WHERE used = 0";
 
   return db_affected_rows(db_query($query));
@@ -308,7 +308,7 @@ function metis_get_unused() {
 
   // Select an unused code from db.
   $query = "SELECT code_public, code_private
-            FROM metis
+            FROM {metis}
             WHERE used = 0";
 
   $row = db_query($query);
@@ -341,7 +341,7 @@ function metis_set_used($code_public, $nid) {
 
     // Check if code is already set as used.
     $query = "SELECT used
-              FROM metis
+              FROM {metis}
               WHERE code_public = '%s'
               AND used > 0";
 
@@ -351,7 +351,7 @@ function metis_set_used($code_public, $nid) {
     if (db_affected_rows($row) == 0) {
 
       // Update database and set used codes as used.
-      $query = "UPDATE metis
+      $query = "UPDATE {metis}
                 SET used = '%s'
                 WHERE code_public = '%s'
                 AND used = 0";
