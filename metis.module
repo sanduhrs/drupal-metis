@@ -88,7 +88,7 @@ function metis_help($path, $arg) {
 
 
 /**
- * Define the settings form
+ * Define the settings form.
  */
 function metis_settings_form() {
 
@@ -115,7 +115,7 @@ function metis_settings_form() {
 
 
 /**
- * Define the form for entering a code
+ * Define the form for entering a code.
  */
 function metis_codes_form() {
 
@@ -141,7 +141,7 @@ function metis_codes_form() {
 
 
 /**
- * Validate the input
+ * Validate the input.
  */
 function metis_codes_form_validate($form, &$form_state) {
 
@@ -151,7 +151,7 @@ function metis_codes_form_validate($form, &$form_state) {
   // Split by line.
   $rows = explode("\n", $input);
 
-  // remove any extra \r characters left behind.
+  // Remove any extra \r characters left behind.
   $rows = array_filter($rows, 'trim');
 
   $codes = array();
@@ -207,8 +207,7 @@ function metis_codes_form_validate($form, &$form_state) {
 
 
 /**
- * Handle submission of the metis codes and saving
- * of the data to the database.
+ * Handle submission of metis codes.
  */
 function metis_codes_form_submit($form, $form_state) {
 
@@ -219,7 +218,7 @@ function metis_codes_form_submit($form, $form_state) {
   // Get rid of white spaces.
   $input = trim($form_state['values']['code']);
 
-  // Split by line
+  // Split by line.
   $rows = explode("\n", $input);
 
   // Remove any extra \r characters left behind.
@@ -274,7 +273,7 @@ function metis_codes_form_submit($form, $form_state) {
 
 
 /**
- * Count unused codes
+ * Count unused codes.
  */
 function metis_count_unused() {
 
@@ -289,7 +288,7 @@ function metis_count_unused() {
 
 
 /**
- * Get unused code
+ * Get unused code.
  */
 function metis_get_unused() {
 
@@ -305,9 +304,9 @@ function metis_get_unused() {
 
     return FALSE;
 
+  }
   // If there are unused codes, return an array
   // with public and private code.
-  }
   else {
     $data = db_fetch_object($row);
     return array(
@@ -319,7 +318,7 @@ function metis_get_unused() {
 
 
 /**
- * Set code used
+ * Set code used.
  */
 function metis_set_used($code_public, $nid) {
 
@@ -339,7 +338,7 @@ function metis_set_used($code_public, $nid) {
 
       // Update database and set used codes as used.
       $query="UPDATE metis
-              SET used='%s'
+              SET used = '%s'
               WHERE code_public = '%s'
               AND used = 0";
 
@@ -347,7 +346,7 @@ function metis_set_used($code_public, $nid) {
 
       // Set watchdog message if db has been updated.
       if (db_affected_rows() > 0) {
-        watchdog('metis', t('Code %public_code has been set as "used" by node %nid.', array('%public_code' => $code_public, '%nid' => $nid)));
+        watchdog('metis', 'Code %public_code has been set as "used" by node %nid.', array('%public_code' => $code_public, '%nid' => $nid));
       }
 
       return TRUE;
@@ -444,7 +443,6 @@ function metis_field_settings($op, $field) {
 
     // Prepare field for views.
     case 'views data':
-
       $data = content_views_field_views_data($field);
       $db_info = content_database_info($field);
       $table_alias = content_views_tablename($field);
@@ -542,12 +540,11 @@ function metis_widget_info() {
 function metis_elements() {
 
   $elements = array(
-    'code_widget' =>
-      array(
-        '#input' => TRUE,
-        '#process' => array('metis_code_widget_process'),
-      ),
-    );
+    'code_widget' => array(
+      '#input' => TRUE,
+      '#process' => array('metis_code_widget_process'),
+    ),
+  );
 
   return $elements;
 }
@@ -640,8 +637,8 @@ function theme_code_widget($element) {
 
 
 /**
-  * Define formatters
-  */
+ * Define formatters.
+ */
 
 /**
  * Implements hook_field_formatter_info().
@@ -725,7 +722,7 @@ function metis_theme() {
 
 
 /**
- * Theme function for default field formatter
+ * Theme function for default field formatter.
  *
  * $element['#item']: the sanitized $delta value for the item,
  * $element['#field_name']: the field name,
@@ -756,7 +753,7 @@ function theme_metis_formatter_default($element = NULL) {
 
 
 /**
- * Theme function for field formatter that shows the codes
+ * Theme function for field formatter that shows the codes.
  */
 function theme_metis_formatter_codes($element = NULL) {
 
@@ -770,7 +767,7 @@ function theme_metis_formatter_codes($element = NULL) {
 
 
 /**
- * Theme function for field formatter that shows the public code
+ * Theme function for field formatter that shows the public code.
  */
 function theme_metis_formatter_code_public($element = NULL) {
 
@@ -784,7 +781,7 @@ function theme_metis_formatter_code_public($element = NULL) {
 
 
 /**
- * Theme function for field formatter that shows the private code
+ * Theme function for field formatter that shows the private code.
  */
 function theme_metis_formatter_code_private($element = NULL) {
 
@@ -798,8 +795,8 @@ function theme_metis_formatter_code_private($element = NULL) {
 
 
 /**
- * Theme function for field formatter that shows wether
- * the code is set to be shown.
+ * Theme function for field formatter show.
+ * Shows wether the code is set to be shown.
  */
 function theme_metis_formatter_show($element = NULL) {
 
