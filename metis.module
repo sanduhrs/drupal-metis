@@ -77,6 +77,9 @@ function metis_help($path, $arg) {
     case 'admin/settings/metis':
       return '<p>' . t('The Metis module allows you to automatically insert the metis pixel provided by <a href="http://www.vgwort.de/">VG Wort</a>. To use the module you need to add a CCK Metis field to your content types.') . '</p>';
 
+    case 'admin/help#metis':
+      // Return a line-break version of the module README.txt
+      return filter_filter('process', 1, NULL, file_get_contents( dirname(__FILE__) . "/README.txt") );
   }
 }
 
@@ -164,7 +167,7 @@ function metis_codes_form_validate($form, &$form_state) {
 
       if (stripos($row, $needle)) $ignore = TRUE;
 
-    } 
+    }
 
     if (!$ignore) {
 
@@ -341,7 +344,7 @@ function metis_set_used($code_public, $nid) {
 function metis_views_api() {
   return array(
     'api' => 2.0,
-  );  
+  );
 }
 
 

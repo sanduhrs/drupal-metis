@@ -16,6 +16,10 @@ function metis_install() {
   drupal_load('module', 'content');
   content_notify('install', 'metis');
 
+  drupal_set_message(st("Metis settings are available under !link",
+    array( '!link' => l(st('Administer > Site configuration > Metis'),  'admin/settings/metis/settings'))
+  ));
+
 }
 
 /**
