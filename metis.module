@@ -34,22 +34,35 @@ function metis_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('metis_settings_form'),
     'access arguments' => array('administer metis module'),
+    'type' => MENU_LOCAL_TASK,
   );
 
   // Set default for tabs.
   $items['admin/settings/metis/settings'] = array(
     'title' => 'Metis settings',
+    'access arguments' => array('administer metis module'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
 
   $items['admin/settings/metis/add'] = array(
-    'title' => 'Add metis codes',
-    'description' => 'Add metis codes',
+    'title' => 'Paste Metis codes',
+    'description' => 'Add metis codes by pasting them to a form',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('metis_codes_form'),
     'access arguments' => array('add new metis codes'),
     'type' => MENU_LOCAL_TASK,
+    'weight' => -5,
+  );
+
+  $items['admin/settings/metis/import_csv'] = array(
+    'title' => 'Import Metis codes from CSV',
+    'description' => 'Import <abbr title="Comma Separated Values">CSV</abbr> file with metis codes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('metis_codes_csv_form'),
+    'access arguments' => array('add new metis codes'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 0,
   );
 
   if (module_exists('views')) {
@@ -172,50 +185,18 @@ function metis_codes_form_validate($form, &$form_state) {
 
   foreach ($rows as $row) {
 
-    $ignore = FALSE;
+    $items = explode(';', $row);
 
-    $pattern = array(
-      'Öffentlicher',
-      'Identifikationscode',
-      'Privater',
-      'VG Wort',
+    // Prepare array for validation.
+    $codes[] = array(
+      'public' => check_plain($items[0]),
+      'private' => check_plain($items[1]),
     );
 
-    foreach ($pattern as $needle) {
-      if (stripos($row, $needle)) {
-        $ignore = TRUE;
-      }
-    }
-
-    if (!$ignore) {
-
-      $items = explode(';', $row);
-      $code_public = $items[0];
-      $code_private = $items[1];
-
-      if (drupal_strlen(trim($code_public)) != 32) {
-        form_set_error('metis_codes', t('Public code %c is not 32 letters long', array('%c' => $code_public)));
-      }
-
-      if (drupal_strlen(trim($code_private)) != 32) {
-        form_set_error('metis_codes', t('Private code %c is not 32 letters long', array('%c' => $code_private)));
-      }
-
-      // Check if code is already in db.
-      $query = "SELECT code_public
-                FROM {metis}
-                WHERE code_public = '%s'";
-
-      $row = db_query($query, $code_public);
-
-      // If code is already in db, throw an error.
-      if ($row->num_rows > 0) {
-        form_set_error('metis_codes', t("Public code %c is already in database.", array('%c' => $code_public)));
-      }
-
-    }
-
   }
+
+  // Add validated codes to $form_state.
+  $form_state['values']['validated'] = metis_code_validation($codes);
 
 }
 
@@ -225,63 +206,232 @@ function metis_codes_form_validate($form, &$form_state) {
  */
 function metis_codes_form_submit($form, $form_state) {
 
-  // Define variables.
-  $count_ignores = 0;
-  $count_saves = 0;
+  metis_code_submission($form_state['values']['validated']);
 
-  // Get rid of white spaces.
-  $input = trim($form_state['values']['code']);
+}
 
-  // Split by line.
-  $rows = explode("\n", $input);
 
-  // Remove any extra \r characters left behind.
-  $rows = array_filter($rows, 'trim');
+/**
+ * Define the form for CSV import.
+ */
+function metis_codes_csv_form() {
 
-  $codes = array();
+  // Define a textarea.
+  $form['file_csv'] = array(
+    '#type' => 'file',
+    '#title' => t('CSV file with Metis codes'),
+    '#description' => t('Please upload the <abbr title="Comma Separated Values">CSV</abbr> file with metis codes.'),
+  );
 
-  // Write codes to database.
-  foreach ($rows as $row) {
+  // Define a submit function.
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Import'),
+  );
 
-    $ignore = FALSE;
+  // set the form encoding type
+  $form['#attributes']['enctype'] = "multipart/form-data";
 
-    // Ignore some rows.
-    $pattern = array(
-      'Öffentlicher',
-      'Identifikationscode',
-      'Privater',
-      'VG Wort',
-    );
+  return $form;
 
-    foreach ($pattern as $needle) {
-      if (stripos($row, $needle)) {
-        $ignore = TRUE;
+}
 
-        // Count ignored rows.
-        $count_ignores++;
-      }
+
+/**
+ * Validate the input.
+ */
+function metis_codes_csv_form_validate($form, &$form_state) {
+  // Attempt to save the uploaded file.
+  $file = file_save_upload('file_csv');
+
+  // Check file uploaded OK.
+  if (!$file) { 
+    form_set_error('file_csv', t('A file must be uploaded.'));
+  }
+  elseif ($file->filemime != 'text/csv') {
+    form_set_error('file_csv', t('The file must be of <abbr title="Comma Separated Values">CSV</abbr> type only.'));
+  }
+  else {
+    // Parse CSV file.
+    ini_set('auto_detect_line_endings', true);
+    $handle = @fopen($file->filepath, "r");
+
+    while ($row = fgetcsv($handle, 0, ';')) {
+
+      $codes[] = array(
+        'public' => check_plain($row[0]),
+        'private' => check_plain($row[1]),
+      );
+
     }
 
-    if (!$ignore) {
-
-      $items = explode(';', $row);
-      $code_public = $items[0];
-      $code_private = $items[1];
-
-      // Write to database.
-      db_query("INSERT INTO {metis} (code_public, code_private) VALUES ('%s', '%s')", str_replace("\r", '', $code_public), str_replace("\r", '', $code_private));
-
-      // Count saved codes.
-      $count_saves++;
-
-    }
+    // Add validated codes to $form_state.
+    $form_state['values']['validated'] = metis_code_validation($codes);
 
   }
+}
+
+
+/**
+ * Handle submission of metis codes from CSV.
+ */
+function metis_codes_csv_form_submit($form, &$form_state) {
+
+  metis_code_submission($form_state['values']['validated']);
+
+}
+
+
+/**
+ * Validate submitted codes.
+ *
+ * @param array $code
+ *   An array of arrays containing the code values. Valid arguments are:
+ *     - 'public' => string containing the 32 letter public code;
+ *     - 'private' => string containing the 32 letter private code;
+ * @param array $type
+ *   An array containing the type of validation. Valid arguments are:
+ *     - 'editorial' => upload of the editorial code format.
+ *     - 'anonymous' => upload of the anonymous code format.
+ *     - 'author' => upload of the auhtor code format.
+ * @return
+ *   An array with the validated codes split up into arrays:
+ *     - 'ignored' => codes to ignore.
+ *     - 'public_length' => codes whose public code isn't 32 characters long.
+ *     - 'private_length' => codes whose private code isn't 32 characters long.
+ *     - 'code_exists' => codes that already exists in db.
+ *     - 'valid' => codes that are valid.
+ *     - 'error_validaton' => the $codes variable that led to an error.
+ */
+function metis_code_validation($codes, $type = 'editorial') {
+
+  $codes_validated = array();
+
+  if (is_array($codes)) {
+
+    switch ($type) {
+
+      case 'editorial':
+
+        $pattern = array(
+          'Öffentlicher',
+          'Identifikationscode',
+          'Privater',
+          'VG Wort',
+        );
+
+        foreach ($codes as $code) {
+
+          // This variable will be used to determine if a code should be ignored.
+          $ignore = FALSE;
+
+          foreach ($pattern as $needle) {
+            if (stripos($code['public'], $needle) || stripos($code['private'], $needle)) {
+              $codes_validated['ignored'][] = $code;
+              $ignore = TRUE;
+              break;
+            }
+          }
+
+          if (!$ignore) {
+
+            // Check if code is already in db.
+            $query = "SELECT code_public
+                      FROM {metis}
+                      WHERE code_public = '%s'";
+
+            $row = db_query($query, $code['public']);
+
+            // Error if code is already in db.
+            if (db_affected_rows($row) != 0) {
+              $codes_validated['code_exists'][] = $code;
+            }
+            // Error if public code too long.
+            elseif (drupal_strlen($code['public']) != 32) {
+              $codes_validated['public_length'][] = $code;
+            }
+            // Error if private code too long.
+            elseif ($code['private'] && drupal_strlen($code['private']) != 32) {
+              $codes_validated['private_length'][] = $code;
+            }
+            // Valid code.
+            else {
+              $codes_validated['valid'][] = $code;
+            }
+
+          }
+
+        }
+
+        break;
+    }
+  }
+  else {
+    $codes_validated['error_validaton'][] = $codes;
+  }
+
+  return $codes_validated;
+
+}
+
+
+/**
+ * Submit codes.
+ *
+ * @param array $codes_validated
+ *   An array of arrays containing the validated codes, valid arguments are:
+ *     - 'public' => string containing the 32 letter public code;
+ *     - 'private' => string containing the 32 letter private code;
+ * @return
+ *   Prints status messages.
+ */
+function metis_code_submission($codes_validated) {
+
+  $count_submit = 0;
+  $count_error_submit = 0;
+
+  // Submit valid codes.
+  if ($codes_validated['valid']) {
+    foreach ($codes_validated['valid'] as $code) {
+          $submit = db_query("INSERT INTO {metis} (code_public, code_private) VALUES ('%s', '%s')", $code['public'], $code['private']);
+      if ($submit) {
+        $count_submit++;
+      }
+      else {
+        $count_error_submit++;
+      }
+    }
+  }
+
+  // Status count.
+  $count_ignored = count($codes_validated['ignored']);
+  $count_public_length = count($codes_validated['public_length']);
+  $count_private_length = count($codes_validated['private_length']);
+  $count_code_exists = count($codes_validated['code_exists']);
+  $count_error_validation = count($codes_validated['error_validaton']);
 
   // Set confirmation message.
-  drupal_set_message(t('%count_ignores lines have been ignored.', array('%count_ignores' => $count_ignores)));
-
-  drupal_set_message(t('%count_saves codes have been saved.', array('%count_saves' => $count_saves)));
+  if ($count_submit > 0) {
+    drupal_set_message(t('%count codes have been saved.', array('%count' => $count_submit)));
+  }
+  if ($count_ignored > 0) {
+    drupal_set_message(t('%count lines have been ignored.', array('%count' => $count_ignored)), 'warning');
+  }
+  if ($count_public_length > 0) {
+    drupal_set_message(t('%count codes have not been saved because the public code is not 32 letters long.', array('%count' => $count_public_length)), 'warning');
+  }
+  if ($count_private_length > 0) {
+    drupal_set_message(t('%count codes have not been saved because the private code is not 32 letters long.', array('%count' => $count_private_length)), 'warning');
+  }
+  if ($count_code_exists > 0) {
+    drupal_set_message(t('%count codes have not been saved because they already existed.', array('%count' => $count_code_exists)), 'warning');
+  }
+  if ($count_error_validation > 0) {
+    drupal_set_message(t('There have been %count validation errors.', array('%count' => $count_error_validation)), 'error');
+  }
+  if ($count_error_submit > 0) {
+    drupal_set_message(t('%count codes have not been saved because of an error.', array('%count' => $count_error_submit)), 'error');
+  }
 
 }
 
