@@ -240,7 +240,7 @@ function metis_codes_csv_form() {
     '#value' => t('Import'),
   );
 
-  // set the form encoding type
+  // Set the form encoding type.
   $form['#attributes']['enctype'] = "multipart/form-data";
 
   return $form;
@@ -256,7 +256,7 @@ function metis_codes_csv_form_validate($form, &$form_state) {
   $file = file_save_upload('file_csv');
 
   // Check file uploaded OK.
-  if (!$file) { 
+  if (!$file) {
     form_set_error('file_csv', t('A file must be uploaded.'));
   }
   elseif ($file->filemime != 'text/csv') {
@@ -264,7 +264,7 @@ function metis_codes_csv_form_validate($form, &$form_state) {
   }
   else {
     // Parse CSV file.
-    ini_set('auto_detect_line_endings', true);
+    ini_set('auto_detect_line_endings', TRUE);
     $handle = @fopen($file->filepath, "r");
 
     while ($row = fgetcsv($handle, 0, ';')) {
@@ -311,7 +311,7 @@ function metis_codes_user_csv_form() {
     '#value' => t('Import'),
   );
 
-  // set the form encoding type
+  // Set the form encoding type.
   $form['#attributes']['enctype'] = "multipart/form-data";
 
   return $form;
@@ -327,7 +327,7 @@ function metis_codes_user_csv_form_validate($form, &$form_state) {
   $file = file_save_upload('file_csv');
 
   // Check file uploaded OK.
-  if (!$file) { 
+  if (!$file) {
     form_set_error('file_csv', t('A file must be uploaded.'));
   }
   elseif ($file->filemime != 'text/csv') {
@@ -335,7 +335,7 @@ function metis_codes_user_csv_form_validate($form, &$form_state) {
   }
   else {
     // Parse CSV file.
-    ini_set('auto_detect_line_endings', true);
+    ini_set('auto_detect_line_endings', TRUE);
     $handle = @fopen($file->filepath, "r");
 
     $i = 0;
@@ -384,15 +384,17 @@ function metis_codes_user_csv_form_submit($form, &$form_state) {
 /**
  * Validate submitted codes.
  *
- * @param array $code
+ * @param array $codes
  *   An array of arrays containing the code values. Valid arguments are:
  *     - 'public' => string containing the 32 letter public code;
  *     - 'private' => string containing the 32 letter private code;
+ *
  * @param array $type
  *   An array containing the type of validation. Valid arguments are:
  *     - 'editorial' => upload of the editorial code format.
  *     - 'anonymous' => upload of the anonymous code format.
  *     - 'author' => upload of the auhtor code format.
+ *
  * @return
  *   An array with the validated codes split up into arrays:
  *     - 'ignored' => codes to ignore.
@@ -411,7 +413,6 @@ function metis_code_validation($codes, $type = 'editorial') {
     switch ($type) {
 
       case 'editorial':
-
         $pattern = array(
           'Öffentlicher',
           'Identifikationscode',
@@ -421,7 +422,7 @@ function metis_code_validation($codes, $type = 'editorial') {
 
         foreach ($codes as $code) {
 
-          // This variable will be used to determine if a code should be ignored.
+          // Variable used to determine if code should be ignored.
           $ignore = FALSE;
 
           foreach ($pattern as $needle) {
@@ -481,10 +482,12 @@ function metis_code_validation($codes, $type = 'editorial') {
  *   An array of arrays containing the validated codes, valid arguments are:
  *     - 'public' => string containing the 32 letter public code;
  *     - 'private' => string containing the 32 letter private code;
+ *
  * @param int $user
- *   The user ID for the code. 0 stands for site-wide
+ *   The user ID for the code. 0 stands for site-wide.
+ *
  * @return
- *   Prints status messages.
+ *   Status messages.
  */
 function metis_code_submission($codes_validated, $user = 0) {
 
