@@ -88,6 +88,12 @@ function metis_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'user' => array(
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
   );
 
