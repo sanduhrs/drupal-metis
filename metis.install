@@ -17,8 +17,7 @@ function metis_install() {
   content_notify('install', 'metis');
 
   $t = get_t();
-  drupal_set_message($t('Metis settings are available under @link', array('@link' => l($t('Administer > Site configuration > Metis'), 'admin/settings/metis/settings'))
-  ));
+  drupal_set_message($t('Metis settings are available under <a href="@link">Administer > Site configuration > Metis</a>.', array('@link' => 'admin/settings/metis/settings')));
 
 }
 
