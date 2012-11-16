@@ -32,7 +32,7 @@ function metis_uninstall() {
   content_notify('uninstall', 'metis');
 
   // Delete our module's variable from the variables table.
-  variable_del('metis_cck_field');
+  variable_del('metis_default_server');
 
 }
 
@@ -92,6 +92,12 @@ function metis_schema() {
         'length' => 10,
         'not null' => TRUE,
         'default' => 0,
+      ),
+      'server' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
       ),
     ),
   );

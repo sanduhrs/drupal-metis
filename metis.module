@@ -130,15 +130,25 @@ function metis_help($path, $arg) {
  */
 function metis_settings_form() {
 
-  // Define a textfield for the server setting.
-  $form['metis_server'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Metis server'),
-    '#default_value' => variable_get('metis_server', 'example.com'),
-    // TODO: Add check or select list.
-    '#description' => t('Change the server to be used'),
-    '#required' => TRUE,
-    '#weight' => -2,
+  // Define a select list.
+  $form['metis_default_server'] = array(
+    '#type' => 'select',
+    '#title' => t('Default Metis server'),
+    '#description' => t('Please select the default Metis server to be used when uploading codes.'),
+    '#default_value' => variable_get('metis_default_server', NULL),
+    '#options'  => array(
+      NULL => t('Please select'),
+      'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
+      'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
+      'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
+      'vg04.met.vgwort.de' => 'vg04.met.vgwort.de',
+      'vg05.met.vgwort.de' => 'vg05.met.vgwort.de',
+      'vg06.met.vgwort.de' => 'vg06.met.vgwort.de',
+      'vg07.met.vgwort.de' => 'vg07.met.vgwort.de',
+      'vg08.met.vgwort.de' => 'vg08.met.vgwort.de',
+      'vg09.met.vgwort.de' => 'vg09.met.vgwort.de',
+    ),
+    '#required' => FALSE,
   );
 
   $form['status'] = array(
@@ -164,6 +174,27 @@ function metis_codes_form() {
     '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code and every ident must be 32 letters long.</strong>'),
     '#cols' => 32,
     '#rows' => 20,
+    '#required' => TRUE,
+  );
+
+  // Define a select list.
+  $form['server'] = array(
+    '#type' => 'select',
+    '#title' => t('Server'),
+    '#description' => t('Please select a Metis server to be associated with the imported codes.'),
+    '#default_value' => variable_get('metis_default_server', NULL),
+    '#options'  => array(
+      NULL => t('Please select'),
+      'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
+      'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
+      'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
+      'vg04.met.vgwort.de' => 'vg04.met.vgwort.de',
+      'vg05.met.vgwort.de' => 'vg05.met.vgwort.de',
+      'vg06.met.vgwort.de' => 'vg06.met.vgwort.de',
+      'vg07.met.vgwort.de' => 'vg07.met.vgwort.de',
+      'vg08.met.vgwort.de' => 'vg08.met.vgwort.de',
+      'vg09.met.vgwort.de' => 'vg09.met.vgwort.de',
+    ),
     '#required' => TRUE,
   );
 
@@ -200,8 +231,9 @@ function metis_codes_form_validate($form, &$form_state) {
 
     // Prepare array for validation.
     $codes[] = array(
-      'public' => check_plain($items[0]),
-      'private' => check_plain($items[1]),
+      'public' => check_plain(trim($items[0])),
+      'private' => check_plain(trim($items[1])),
+      'server' => $form_state['values']['server'],
     );
 
   }
@@ -232,6 +264,27 @@ function metis_codes_csv_form() {
     '#type' => 'file',
     '#title' => t('CSV file with Metis codes'),
     '#description' => t('Please upload the <abbr title="Comma Separated Values">CSV</abbr> file with metis codes.'),
+  );
+
+  // Define a select list.
+  $form['server'] = array(
+    '#type' => 'select',
+    '#title' => t('Server'),
+    '#description' => t('Please select a Metis server to be associated with the imported codes.'),
+    '#default_value' => variable_get('metis_default_server', NULL),
+    '#options'  => array(
+      NULL => t('Please select'),
+      'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
+      'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
+      'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
+      'vg04.met.vgwort.de' => 'vg04.met.vgwort.de',
+      'vg05.met.vgwort.de' => 'vg05.met.vgwort.de',
+      'vg06.met.vgwort.de' => 'vg06.met.vgwort.de',
+      'vg07.met.vgwort.de' => 'vg07.met.vgwort.de',
+      'vg08.met.vgwort.de' => 'vg08.met.vgwort.de',
+      'vg09.met.vgwort.de' => 'vg09.met.vgwort.de',
+    ),
+    '#required' => TRUE,
   );
 
   // Define a submit function.
@@ -270,8 +323,9 @@ function metis_codes_csv_form_validate($form, &$form_state) {
     while ($row = fgetcsv($handle, 0, ';')) {
 
       $codes[] = array(
-        'public' => check_plain($row[0]),
-        'private' => check_plain($row[1]),
+        'public' => check_plain(trim($row[0])),
+        'private' => check_plain(trim($row[1])),
+        'server' => $form_state['values']['server'],
       );
 
     }
@@ -350,12 +404,12 @@ function metis_codes_user_csv_form_validate($form, &$form_state) {
         $codes[$i]['public'] = check_plain(substr($url[0], -32, 32));
 
         // Get the server.
-        // preg_match('#vg[0-9]{2}\.met\.vgwort\.de#', $row[1], $server);
-        // $codes[$i]['server'] = check_plain($server[0]);
+        preg_match('#vg[0-9]{2}\.met\.vgwort\.de#', $row[1], $server);
+        $codes[$i]['server'] = check_plain($server[0]);
       }
 
-      // Lines whose second element starts with 'Privater Identifikationscode:'
-      // contain the private code.
+      // Lines whose second element starts with 'Privater
+      // Identifikationscode:' contain the private code.
       if ($row[1] == 'Privater Identifikationscode:') {
         $codes[$i]['private'] = check_plain($row[2]);
         $i++;
@@ -404,67 +458,66 @@ function metis_codes_user_csv_form_submit($form, &$form_state) {
  *     - 'valid' => codes that are valid.
  *     - 'error_validaton' => the $codes variable that led to an error.
  */
-function metis_code_validation($codes, $type = 'editorial') {
+function metis_code_validation($codes) {
 
   $codes_validated = array();
 
   if (is_array($codes)) {
 
-    switch ($type) {
+    $pattern = array(
+      'Öffentlicher',
+      'Identifikationscode',
+      'Privater',
+      'VG Wort',
+    );
 
-      case 'editorial':
-        $pattern = array(
-          'Öffentlicher',
-          'Identifikationscode',
-          'Privater',
-          'VG Wort',
-        );
+    foreach ($codes as $code) {
 
-        foreach ($codes as $code) {
+      // Variable used to determine if code should be ignored.
+      $ignore = FALSE;
 
-          // Variable used to determine if code should be ignored.
-          $ignore = FALSE;
+      foreach ($pattern as $needle) {
+        if (stripos($code['public'], $needle) || stripos($code['private'], $needle)) {
+          $codes_validated['ignored'][] = $code;
+          $ignore = TRUE;
+          break;
+        }
+      }
 
-          foreach ($pattern as $needle) {
-            if (stripos($code['public'], $needle) || stripos($code['private'], $needle)) {
-              $codes_validated['ignored'][] = $code;
-              $ignore = TRUE;
-              break;
-            }
-          }
+      if (!$ignore) {
 
-          if (!$ignore) {
+        // Check if code is already in db.
+        $query = "SELECT code_public
+                  FROM {metis}
+                  WHERE code_public = '%s'";
 
-            // Check if code is already in db.
-            $query = "SELECT code_public
-                      FROM {metis}
-                      WHERE code_public = '%s'";
+        $row = db_query($query, $code['public']);
 
-            $row = db_query($query, $code['public']);
-
-            // Error if code is already in db.
-            if (db_affected_rows($row) != 0) {
-              $codes_validated['code_exists'][] = $code;
-            }
-            // Error if public code too long.
-            elseif (drupal_strlen($code['public']) != 32) {
-              $codes_validated['public_length'][] = $code;
-            }
-            // Error if private code too long.
-            elseif ($code['private'] && drupal_strlen($code['private']) != 32) {
-              $codes_validated['private_length'][] = $code;
-            }
-            // Valid code.
-            else {
-              $codes_validated['valid'][] = $code;
-            }
-
-          }
-
+        // Error if code is already in db.
+        if (db_affected_rows($row) != 0) {
+          $codes_validated['code_exists'][] = $code;
+        }
+        // Error if public code too long.
+        elseif (drupal_strlen($code['public']) != 32) {
+          $codes_validated['public_length'][] = $code;
+        }
+        // Error if private code too long.
+        elseif ($code['private'] && drupal_strlen($code['private']) != 32) {
+          $codes_validated['private_length'][] = $code;
+        }
+        // Error if server doesn't match.
+        elseif (preg_match('#vg[0-9]{2}\.met\.vgwort\.de#', $code['server']) == 0) {
+          $codes_validated['server'][] = $code;
+        }
+        // Valid code.
+        else {
+          $codes_validated['valid'][] = $code;
         }
 
-        break;
+      }
+
     }
+
   }
   else {
     $codes_validated['error_validaton'][] = $codes;
@@ -497,7 +550,7 @@ function metis_code_submission($codes_validated, $user = 0) {
   // Submit valid codes.
   if ($codes_validated['valid']) {
     foreach ($codes_validated['valid'] as $code) {
-          $submit = db_query("INSERT INTO {metis} (code_public, code_private, user) VALUES ('%s', '%s', '%s')", $code['public'], $code['private'], $user);
+          $submit = db_query("INSERT INTO {metis} (code_public, code_private, user, server) VALUES ('%s', '%s', '%s', '%s')", $code['public'], $code['private'], $user, $code['server']);
       if ($submit) {
         $count_submit++;
       }
@@ -511,6 +564,7 @@ function metis_code_submission($codes_validated, $user = 0) {
   $count_ignored = count($codes_validated['ignored']);
   $count_public_length = count($codes_validated['public_length']);
   $count_private_length = count($codes_validated['private_length']);
+  $count_server = count($codes_validated['server']);
   $count_code_exists = count($codes_validated['code_exists']);
   $count_error_validation = count($codes_validated['error_validaton']);
 
@@ -526,6 +580,9 @@ function metis_code_submission($codes_validated, $user = 0) {
   }
   if ($count_private_length > 0) {
     drupal_set_message(t('%count codes have not been saved because the private code is not 32 letters long.', array('%count' => $count_private_length)), 'warning');
+  }
+  if ($count_server > 0) {
+    drupal_set_message(t('%count codes have not been saved because the server wasn\'t valid.', array('%count' => $count_server)), 'warning');
   }
   if ($count_code_exists > 0) {
     drupal_set_message(t('%count codes have not been saved because they already existed.', array('%count' => $count_code_exists)), 'warning');
@@ -561,7 +618,7 @@ function metis_count_unused() {
 function metis_get_unused() {
 
   // Select an unused code from db.
-  $query = "SELECT code_public, code_private
+  $query = "SELECT code_public, code_private, server
             FROM {metis}
             WHERE used = 0";
 
@@ -580,6 +637,7 @@ function metis_get_unused() {
     return array(
       'code_public' => $data->code_public,
       'code_private' => $data->code_private,
+      'server' => $data->server,
     );
   }
 }
@@ -706,6 +764,13 @@ function metis_field_settings($op, $field) {
         'sortable' => TRUE,
         'views' => TRUE,
       );
+      $columns['server'] = array(
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => FALSE,
+        'sortable' => TRUE,
+        'views' => TRUE,
+      );
 
       return $columns;
 
@@ -738,6 +803,7 @@ function metis_field($op, &$node, $field, &$items, $teaser, $page) {
         if (is_array($unused)) {
           $items[0]['code_public'] = $unused['code_public'];
           $items[0]['code_private'] = $unused['code_private'];
+          $items[0]['server'] = $unused['server'];
         }
 
       }
@@ -840,11 +906,18 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
     '#weight' => 1,
   );
 
+  $element['server'] = array(
+    '#title' => t('Metis server'),
+    '#type' => 'hidden',
+    '#default_value' => $defaults['server'],
+    '#weight' => 2,
+  );
+
   $element['show'] = array(
     '#title' => t('Include public code in article (enable count)'),
     '#type' => 'checkbox',
     '#default_value' => $defaults['show'],
-    '#weight' => 1,
+    '#weight' => 3,
   );
 
   // Disable select field if there are no unused codes left.
@@ -856,7 +929,7 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   }
   elseif ($defaults['code_public'] && $defaults['code_private']) {
 
-    $element['show']['#description'] = t('Public code: %code_public.<br /> Private code: %code_private.', array('%code_public' => $defaults['code_public'], '%code_private' => $defaults['code_private']));
+    $element['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array('%code_public' => $defaults['code_public'], '%code_private' => $defaults['code_private'], '%server' => $defaults['server']));
 
   }
 
@@ -1005,12 +1078,9 @@ function theme_metis_formatter_default($element = NULL) {
     return '';
   }
 
-  // Get server.
-  $server = variable_get('metis_server', NULL);
+  if ($element['#item']['show'] && !empty($element['#item']['code_public']) && !empty($element['#item']['server'])) {
 
-  if ($server && $element['#item']['show'] && !empty($element['#item']['code_public'])) {
-
-    return '<img class="metis_code_img" src="http://' . $server . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
+    return '<img class="metis_code_img" src="http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
 
     // TODO: Hide in teaser.
     // TODO: Hide label.
