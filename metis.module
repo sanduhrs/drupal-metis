@@ -443,13 +443,7 @@ function metis_codes_user_csv_form_submit($form, &$form_state) {
  *     - 'public' => string containing the 32 letter public code;
  *     - 'private' => string containing the 32 letter private code;
  *
- * @param array $type
- *   An array containing the type of validation. Valid arguments are:
- *     - 'editorial' => upload of the editorial code format.
- *     - 'anonymous' => upload of the anonymous code format.
- *     - 'author' => upload of the auhtor code format.
- *
- * @return array
+ * @return array $codes_validated
  *   An array with the validated codes split up into arrays:
  *     - 'ignored' => codes to ignore.
  *     - 'public_length' => codes whose public code isn't 32 characters long.
@@ -579,7 +573,7 @@ function metis_code_submission($codes_validated, $user = 0) {
     drupal_set_message(t('%count codes have not been saved because the private code is not 32 letters long.', array('%count' => $count_private_length)), 'warning');
   }
   if ($count_server > 0) {
-    drupal_set_message(t('%count codes have not been saved because the server wasn\'t valid.', array('%count' => $count_server)), 'warning');
+    drupal_set_message(t("%count codes have not been saved because the server wasn't valid.", array('%count' => $count_server)), 'warning');
   }
   if ($count_code_exists > 0) {
     drupal_set_message(t('%count codes have not been saved because they already existed.', array('%count' => $count_code_exists)), 'warning');
@@ -926,7 +920,12 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   }
   elseif ($defaults['code_public'] && $defaults['code_private']) {
 
-    $element['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array('%code_public' => $defaults['code_public'], '%code_private' => $defaults['code_private'], '%server' => $defaults['server']));
+    $element['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array(
+      '%code_public' => $defaults['code_public'],
+      '%code_private' => $defaults['code_private'],
+      '%server' => $defaults['server'],
+      )
+    );
 
   }
 
