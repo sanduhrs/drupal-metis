@@ -449,7 +449,7 @@ function metis_codes_user_csv_form_submit($form, &$form_state) {
  *     - 'anonymous' => upload of the anonymous code format.
  *     - 'author' => upload of the auhtor code format.
  *
- * @return
+ * @return array
  *   An array with the validated codes split up into arrays:
  *     - 'ignored' => codes to ignore.
  *     - 'public_length' => codes whose public code isn't 32 characters long.
@@ -538,9 +538,6 @@ function metis_code_validation($codes) {
  *
  * @param int $user
  *   The user ID for the code. 0 stands for site-wide.
- *
- * @return
- *   Status messages.
  */
 function metis_code_submission($codes_validated, $user = 0) {
 
@@ -550,7 +547,7 @@ function metis_code_submission($codes_validated, $user = 0) {
   // Submit valid codes.
   if ($codes_validated['valid']) {
     foreach ($codes_validated['valid'] as $code) {
-          $submit = db_query("INSERT INTO {metis} (code_public, code_private, user, server) VALUES ('%s', '%s', '%s', '%s')", $code['public'], $code['private'], $user, $code['server']);
+      $submit = db_query("INSERT INTO {metis} (code_public, code_private, user, server) VALUES ('%s', '%s', '%s', '%s')", $code['public'], $code['private'], $user, $code['server']);
       if ($submit) {
         $count_submit++;
       }
