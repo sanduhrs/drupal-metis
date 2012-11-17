@@ -35,7 +35,7 @@ function metis_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('metis_settings_form'),
     'access arguments' => array('administer metis module'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_NORMAL_ITEM,
   );
 
   // Set default for tabs.
