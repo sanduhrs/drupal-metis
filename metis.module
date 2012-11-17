@@ -442,7 +442,6 @@ function metis_codes_user_csv_form_submit($form, &$form_state) {
  *   An array of arrays containing the code values. Valid arguments are:
  *     - 'public' => string containing the 32 letter public code;
  *     - 'private' => string containing the 32 letter private code;
- *
  * @return array $codes_validated
  *   An array with the validated codes split up into arrays:
  *     - 'ignored' => codes to ignore.
