@@ -46,7 +46,24 @@ function metis_menu() {
     'weight' => -10,
   );
 
-  $items['admin/settings/metis/add'] = array(
+  $items['admin/settings/metis/codes'] = array(
+    'title' => 'Import Metis codes',
+    'description' => 'Import <abbr title="Comma Separated Values">CSV</abbr> file with metis codes',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('metis_codes_csv_form'),
+    'access arguments' => array('add site-wide metis codes'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // Set default for tabs.
+  $items['admin/settings/metis/codes/import'] = array(
+    'title' => 'Import Metis codes from CSV',
+    'access arguments' => array('add site-wide metis codes'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items['admin/settings/metis/codes/paste'] = array(
     'title' => 'Paste Metis codes',
     'description' => 'Add metis codes by pasting them to a form',
     'page callback' => 'drupal_get_form',
@@ -54,16 +71,6 @@ function metis_menu() {
     'access arguments' => array('add site-wide metis codes'),
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
-  );
-
-  $items['admin/settings/metis/import_csv'] = array(
-    'title' => 'Import Metis codes from CSV',
-    'description' => 'Import <abbr title="Comma Separated Values">CSV</abbr> file with metis codes',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('metis_codes_csv_form'),
-    'access arguments' => array('add site-wide metis codes'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 0,
   );
 
   $items['user/%/metis/add'] = array(
@@ -85,21 +92,49 @@ function metis_menu() {
     // Select metis fields.
     foreach ($fields as $field) {
       if ($field['type'] == 'metis') {
-        $metis_fields[$field['field_name']]['field_name'] = $field['field_name'];
-        $metis_fields[$field['field_name']]['field_label'] = $field['widget']['label'];
+        $metis_fields[] = array(
+          'field_name' => $field['field_name'],
+          'field_label' => $field['widget']['label'],
+        );
       }
     }
 
-    // Create a menu entry for every metis field.
-    foreach ($metis_fields as $field) {
-      $items['admin/settings/metis/list_' . $field['field_name']] = array(
-        'title' => 'List codes (field: ' . $field['field_label'] . ')',
-        'description' => 'List used metis codes for field ' . $field['field_label'],
+    // Create a default menu entry for the first field.
+    if (count($metis_fields) > 0) {
+      $items['admin/settings/metis/list'] = array(
+        'title' => 'List codes',
+        'description' => 'List used metis codes',
         'page callback' => 'views_page',
-        'page arguments' => array('metis_' . $field['field_name']),
+        'page arguments' => array('metis_' . $metis_fields[0]['field_name']),
         'access arguments' => array('administer metis module'),
         'type' => MENU_LOCAL_TASK,
       );
+    }
+
+    // If there are more Metis fields, add them as sub tabs.
+    if (count($metis_fields) > 1) {
+      // Set default for tabs (first field).
+      $items['admin/settings/metis/list/' . $metis_fields[0]['field_name']] = array(
+        'title' => 'Field ' . $metis_fields[0]['field_label'],
+        'access arguments' => array('administer metis module'),
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'weight' => -10,
+      );
+
+      // Unset first field because it is already included.
+      unset($metis_fields[0]);
+
+      // Create a menu entry for every metis field.
+      foreach ($metis_fields as $field) {
+        $items['admin/settings/metis/list/' . $field['field_name']] = array(
+          'title' => 'Field ' . $field['field_label'],
+          'description' => 'List used metis codes for field ' . $field['field_label'],
+          'page callback' => 'views_page',
+          'page arguments' => array('metis_' . $field['field_name']),
+          'access arguments' => array('administer metis module'),
+          'type' => MENU_LOCAL_TASK,
+        );
+      }
     }
   }
 
