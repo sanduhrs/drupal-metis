@@ -842,6 +842,13 @@ function metis_field($op, &$node, $field, &$items, $teaser, $page) {
         metis_set_used($items[0]['code_public'], $node->nid);
       }
       break;
+
+    case 'update':
+      // Set code as used after node is updated.
+      if ($items[0]['code_public']) {
+        metis_set_used($items[0]['code_public'], $node->nid);
+      }
+      break;
   }
 }
 
