@@ -925,28 +925,36 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   $defaults = $element['#value'];
   $field = content_fields($element['#field_name'], $element['#type_name']);
 
-  $element['code_public'] = array(
+  $element['metis'] = array(
+    '#title' => $element['#title'] . ' (VG Wort)',
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#parents' => $element['#parents'],
+  );
+
+  $element['metis']['code_public'] = array(
     '#title' => t('Public code'),
     '#type' => 'hidden',
     '#default_value' => $defaults['code_public'],
     '#weight' => 0,
   );
 
-  $element['code_private'] = array(
+  $element['metis']['code_private'] = array(
     '#title' => t('Private code'),
     '#type' => 'hidden',
     '#default_value' => $defaults['code_private'],
     '#weight' => 1,
   );
 
-  $element['server'] = array(
+  $element['metis']['server'] = array(
     '#title' => t('Metis server'),
     '#type' => 'hidden',
     '#default_value' => $defaults['server'],
     '#weight' => 2,
   );
 
-  $element['show'] = array(
+  $element['metis']['show'] = array(
     '#title' => t('Include public code in article (enable count)'),
     '#type' => 'checkbox',
     '#default_value' => $defaults['show'],
@@ -956,13 +964,13 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   // Disable select field if there are no unused codes left.
   if (!$defaults['code_public'] && !$defaults['show'] && metis_count_unused() == 0) {
 
-    $element['show']['#disabled'] = 'disabled';
-    $element['show']['#description'] = '<span style="color:red">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</span>';
+    $element['metis']['show']['#disabled'] = 'disabled';
+    $element['metis']['show']['#description'] = '<span style="color:red">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</span>';
 
   }
   elseif ($defaults['code_public'] && $defaults['code_private']) {
 
-    $element['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array(
+    $element['metis']['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array(
       '%code_public' => $defaults['code_public'],
       '%code_private' => $defaults['code_private'],
       '%server' => $defaults['server'],
@@ -983,10 +991,6 @@ function metis_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array(
     '#type' => $field['widget']['type'],
     '#default_value' => isset($items[$delta]) ? $items[$delta] : '',
-    // Needs to be added to display title with single value.
-    // http://poplarware.com/articles/cck_field_module#comment-3344.
-    '#field' => $field,
-
   );
 
   return $element;
@@ -999,18 +1003,7 @@ function metis_widget(&$form, &$form_state, $field, $items, $delta = 0) {
  */
 function theme_code_widget($element) {
 
-  $output = $element['#children'];
-
-  // Needs to be added to display title with single value.
-  // http://poplarware.com/articles/cck_field_module#comment-3344.
-  if (empty($element['#field']['multiple'])) {
-
-    $output = '<label for="edit-field-metis-0-code-public-wrapper">' . $element['#field']['widget']['label'] . '</label>' . $output;
-    $output .= $element['#field']['widget']['description'];
-
-  }
-
-  return $output;
+  return $element['#children'];
 
 }
 
