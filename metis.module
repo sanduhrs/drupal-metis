@@ -154,11 +154,31 @@ function metis_help($path, $arg) {
  */
 function metis_settings_form() {
 
+  // Get metis field name(s).
+  $fields = content_fields();
+  $metis_fields = 0;
+
+  foreach ($fields as $field) {
+    if ($field['type'] == 'metis') {
+      $metis_fields++;
+    }
+  }
+
+  // Display warning if no Metis CCK field is configured.
+  if ($metis_fields == 0) {
+    drupal_set_message(t('There is no Metis CCK field configured. Please add a CCK field of the type <em>Metis</em> to at least one node type to make this module work.'), 'error');
+  }
+
+  // Display warning if no unused codes left.
+  if (metis_count_unused() == 0) {
+    drupal_set_message(t('There are no unused codes left. Please add some.'), 'error');
+  }
+
   // Define a select list.
   $form['metis_default_server'] = array(
     '#type' => 'select',
     '#title' => t('Default Metis server'),
-    '#description' => t('Please select the default Metis server to be used when uploading codes.'),
+    '#description' => t('Please select the default Metis server to be used when uploading codes. If your website is registered with VG Wort as an editorial, you will be assigned a server that you should use permanently.'),
     '#default_value' => variable_get('metis_default_server', NULL),
     '#options'  => array(
       NULL => t('Please select'),
@@ -1008,7 +1028,7 @@ function theme_metis_formatter_default($element = NULL) {
   }
 
   // Only include the image if (a) field is set to show, (b) a public
-  // code exists, (c) a server exists, (d) on node pages (node/*)
+  // code exists, (c) a server exists, (d) on node pages (node/*).
   if ($element['#item']['show'] && !empty($element['#item']['code_public']) && !empty($element['#item']['server']) && arg(0) == 'node' && is_numeric(arg(1))) {
 
     return '<img class="metis_code_img" src="http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
