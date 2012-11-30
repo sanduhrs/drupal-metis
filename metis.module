@@ -195,7 +195,7 @@ function metis_codes_form() {
   $form['code'] = array(
     '#type' => 'textarea',
     '#title' => t('Metis code'),
-    '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code and every ident must be 32 letters long.</strong>'),
+    '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code must be 32 letters long.</strong>'),
     '#cols' => 32,
     '#rows' => 20,
     '#required' => TRUE,
