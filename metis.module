@@ -16,7 +16,6 @@ function metis_perm() {
     'administer metis module',
     'add metis codes to nodes',
     'add site-wide metis codes',
-    'add individual metis codes',
   );
 
 }
@@ -71,16 +70,6 @@ function metis_menu() {
     'access arguments' => array('add site-wide metis codes'),
     'type' => MENU_LOCAL_TASK,
     'weight' => -5,
-  );
-
-  $items['user/%/metis/add'] = array(
-    'title' => 'Import Metis codes from CSV',
-    'description' => 'Import <abbr title="Comma Separated Values">CSV</abbr> file with metis codes',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('metis_codes_user_csv_form'),
-    'access arguments' => array('add individual metis codes'),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 0,
   );
 
   if (module_exists('views')) {
@@ -383,94 +372,6 @@ function metis_codes_csv_form_submit($form, &$form_state) {
 
 
 /**
- * Define the form for CSV import of individual codes.
- */
-function metis_codes_user_csv_form() {
-
-  // Define a textarea.
-  $form['file_csv'] = array(
-    '#type' => 'file',
-    '#title' => t('CSV file with Metis codes'),
-    '#description' => t('Please upload the <abbr title="Comma Separated Values">CSV</abbr> file with metis codes.'),
-  );
-
-  // Define a submit function.
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Import'),
-  );
-
-  // Set the form encoding type.
-  $form['#attributes']['enctype'] = "multipart/form-data";
-
-  return $form;
-
-}
-
-
-/**
- * Validate the input.
- */
-function metis_codes_user_csv_form_validate($form, &$form_state) {
-  // Attempt to save the uploaded file.
-  $file = file_save_upload('file_csv');
-
-  // Check file uploaded OK.
-  if (!$file) {
-    form_set_error('file_csv', t('A file must be uploaded.'));
-  }
-  elseif ($file->filemime != 'text/csv') {
-    form_set_error('file_csv', t('The file must be of <abbr title="Comma Separated Values">CSV</abbr> type only.'));
-  }
-  else {
-    // Parse CSV file.
-    ini_set('auto_detect_line_endings', TRUE);
-    $handle = @fopen($file->filepath, "r");
-
-    $i = 0;
-
-    while ($row = fgetcsv($handle, 0, ';')) {
-
-      // Lines whose second element starts with '<img' contain the public code.
-      if (substr($row[1], 0, 4) == '<img') {
-
-        // Get the public code.
-        preg_match('#http://vg[0-9]{2}\.met\.vgwort\.de/na/[0-9a-f]{32}#', $row[1], $url);
-        $codes[$i]['public'] = check_plain(substr($url[0], -32, 32));
-
-        // Get the server.
-        preg_match('#vg[0-9]{2}\.met\.vgwort\.de#', $row[1], $server);
-        $codes[$i]['server'] = check_plain($server[0]);
-      }
-
-      // Lines whose second element starts with 'Privater
-      // Identifikationscode:' contain the private code.
-      if ($row[1] == 'Privater Identifikationscode:') {
-        $codes[$i]['private'] = check_plain($row[2]);
-        $i++;
-      }
-
-    }
-
-    // Add validated codes to $form_state.
-    $form_state['values']['validated'] = metis_code_validation($codes);
-
-  }
-}
-
-
-/**
- * Handle submission of metis codes from CSV.
- */
-function metis_codes_user_csv_form_submit($form, &$form_state) {
-
-  global $user;
-  metis_code_submission($form_state['values']['validated'], $user->uid);
-
-}
-
-
-/**
  * Validate submitted codes.
  *
  * @param array $codes
@@ -564,11 +465,8 @@ function metis_code_validation($codes) {
  *   An array of arrays containing the validated codes, valid arguments are:
  *     - 'public' => string containing the 32 letter public code;
  *     - 'private' => string containing the 32 letter private code;
- *
- * @param int $user
- *   The user ID for the code. 0 stands for site-wide.
  */
-function metis_code_submission($codes_validated, $user = 0) {
+function metis_code_submission($codes_validated) {
 
   $count_submit = 0;
   $count_error_submit = 0;
@@ -576,7 +474,7 @@ function metis_code_submission($codes_validated, $user = 0) {
   // Submit valid codes.
   if ($codes_validated['valid']) {
     foreach ($codes_validated['valid'] as $code) {
-      $submit = db_query("INSERT INTO {metis} (code_public, code_private, user, server) VALUES ('%s', '%s', '%s', '%s')", $code['public'], $code['private'], $user, $code['server']);
+      $submit = db_query("INSERT INTO {metis} (code_public, code_private, server) VALUES ('%s', '%s', '%s')", $code['public'], $code['private'], $code['server']);
       if ($submit) {
         $count_submit++;
       }
