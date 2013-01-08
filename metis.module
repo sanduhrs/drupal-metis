@@ -669,7 +669,9 @@ function metis_field_access($op, $field, $account = NULL, $node = NULL) {
   switch ($op) {
 
     case 'edit':
-      return user_access('add metis codes to nodes', $account);
+      if ($field['type'] == 'metis') {
+        return user_access('add metis codes to nodes', $account);
+      }
       break;
 
   }
