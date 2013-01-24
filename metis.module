@@ -882,7 +882,6 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
     '#weight' => 3,
   );
 
-
   if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit') {
 
     // Count characters of the body.
@@ -1052,7 +1051,15 @@ function theme_metis_formatter_default($element = NULL) {
   // code exists, (c) a server exists, (d) on node pages (node/*).
   if ($element['#item']['show'] && !empty($element['#item']['code_public']) && !empty($element['#item']['server']) && arg(0) == 'node' && is_numeric(arg(1))) {
 
-    return '<img class="metis_code_img" src="http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
+    $path = 'http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'];
+    $attributes = array(
+      'width' => 1,
+      'height' => 1,
+      'class' => 'metis_code_img',
+      );
+    $img = theme_image($path, NULL, NULL, $attributes, FALSE);
+
+    return $img;
 
     // TODO: Hide label.
   }
