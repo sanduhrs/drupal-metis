@@ -634,6 +634,7 @@ function metis_set_used($code_public, $nid) {
 
 }
 
+
 /**
  * Implements hook_views_api().
  */
@@ -881,21 +882,39 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
     '#weight' => 3,
   );
 
+
+  if (arg(0) == 'node' && is_numeric(arg(1)) && arg(2) == 'edit') {
+
+    // Count characters of the body.
+    $count = strlen(strip_tags($form['#node']->body));
+
+    // Set text color.
+    if ($count > 1800) {
+      $class = 'ok';
+    } else {
+      $class = 'error';
+    }
+
+    // Set description.
+    $element['metis']['show']['#description'] = '<span class="' . $class . '">' . t('Text had approximately %count characters on last save. VG Wort requires at least 1.800.', array('%count' => $count)) . '</span>';
+
+  }
+
   // Disable select field if there are no unused codes left.
   if (!$defaults['code_public'] && !$defaults['show'] && metis_count_unused() == 0) {
 
     $element['metis']['show']['#disabled'] = 'disabled';
-    $element['metis']['show']['#description'] = '<span style="color:red">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</span>';
+    $element['metis']['show']['#description'] .= '<p class="error">' . t('There are no unused codes left! Field has been disabled, please add new codes.') . '</p>';
 
   }
   elseif ($defaults['code_public'] && $defaults['code_private']) {
 
-    $element['metis']['show']['#description'] = t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array(
+    $element['metis']['show']['#description'] .= '<p>' . t('Public code: %code_public<br /> Private code: %code_private<br /> Server: %server', array(
       '%code_public' => $defaults['code_public'],
       '%code_private' => $defaults['code_private'],
       '%server' => $defaults['server'],
       )
-    );
+    ) . '</p>';
 
   }
 
@@ -1033,15 +1052,7 @@ function theme_metis_formatter_default($element = NULL) {
   // code exists, (c) a server exists, (d) on node pages (node/*).
   if ($element['#item']['show'] && !empty($element['#item']['code_public']) && !empty($element['#item']['server']) && arg(0) == 'node' && is_numeric(arg(1))) {
 
-    $path = 'http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'];
-    $attributes = array(
-      'width' => 1,
-      'height' => 1,
-      'class' => 'metis_code_img',
-      );
-    $img = theme_image($path, NULL, NULL, $attributes, FALSE);
-
-    return $img;
+    return '<img class="metis_code_img" src="http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'] . '" height="1" width="1" alt="" />';
 
     // TODO: Hide label.
   }
