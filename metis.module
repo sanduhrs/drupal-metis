@@ -402,8 +402,8 @@ function metis_codes_csv_form_submit($form, &$form_state) {
  * @return array
  *   An array with the validated codes split up into arrays:
  *     - 'ignored' => codes to ignore.
- *     - 'public_length' => codes whose public metis code isn't 32 characters long.
- *     - 'private_length' => codes whose private metis code isn't 32 characters long.
+ *     - 'public_length' => public metis codes longer than 32 characters.
+ *     - 'private_length' => private metis codes longer than 32 characters.
  *     - 'code_exists' => codes that already exists in db.
  *     - 'valid' => codes that are valid.
  *     - 'error_validaton' => the $codes variable that led to an error.
@@ -890,7 +890,8 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
     // Set text color.
     if ($count > 1800) {
       $class = 'ok';
-    } else {
+    }
+    else {
       $class = 'error';
     }
 
@@ -1051,7 +1052,7 @@ function theme_metis_formatter_default($element = NULL) {
       'width' => 1,
       'height' => 1,
       'class' => 'metis_code_img',
-      );
+    );
     $img = theme_image($path, NULL, NULL, $attributes, FALSE);
 
     return $img;
@@ -1119,10 +1120,12 @@ function theme_metis_formatter_show($element = NULL) {
 
     case '0':
       return t('no');
+
       break;
 
     case '1':
       return t('yes');
+
       break;
 
   }
