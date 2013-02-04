@@ -1121,12 +1121,12 @@ function theme_metis_formatter_show($element = NULL) {
     case '0':
       return t('no');
 
-      break;
+    break;
 
     case '1':
       return t('yes');
 
-      break;
+    break;
 
   }
 
