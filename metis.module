@@ -367,8 +367,8 @@ function metis_codes_csv_form_validate($form, &$form_state) {
     while ($row = fgetcsv($handle, 0, ';')) {
 
       $codes[] = array(
-        'public' => check_plain(trim($row[0])),
-        'private' => check_plain(trim($row[1])),
+        'public' => trim($row[0]),
+        'private' => trim($row[1]),
         'server' => $form_state['values']['server'],
       );
 
@@ -909,7 +909,7 @@ function metis_code_widget_process($element, $edit, &$form_state, $form) {
   }
   elseif ($defaults['code_public'] && $defaults['code_private']) {
 
-    $element['metis']['show']['#description'] .= '<p>' . t('Public metis code') . ': ' . $defaults['code_public'] . '<br /> ' . t('Private metis code') . ': ' . $defaults['code_private'] . '<br /> ' . t('Metis Server') . ': ' . $defaults['server'] . '</p>';
+    $element['metis']['show']['#description'] .= '<p>' . t('Public metis code: %code', array('%code' => $defaults['code_public'])) . '<br /> ' . t('Private metis code: %code', array('%code' => $defaults['code_private'])) . '<br /> ' . t('Metis Server: %server', array('%server' => $defaults['server'])) . '</p>';
 
   }
 
@@ -1053,8 +1053,7 @@ function theme_metis_formatter_default($element = NULL) {
       'height' => 1,
       'class' => 'metis_code_img',
     );
-    $img = theme_image($path, NULL, NULL, $attributes, FALSE);
-
+    $img = theme('image', $path, NULL, NULL, $attributes, FALSE);
     return $img;
 
     // TODO: Hide label.
@@ -1072,7 +1071,7 @@ function theme_metis_formatter_codes($element = NULL) {
     return '';
   }
 
-  return '<p><strong>' . t('Public metis code') . ':</strong> ' . $element['#item']['code_public'] . '<br /><strong>' . t('Private metis code') . ':</strong> ' . $element['#item']['code_private'] . '</p>';
+  return '<p><strong>' . t('Public metis code: %code', array('%code' => $element['#item']['code_public'])) . '<br /><strong>' . t('Private metis code: %code', array('%code' => $element['#item']['code_private'])) . '</p>';
 
 }
 
