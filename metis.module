@@ -195,14 +195,6 @@ function metis_settings_form() {
     '#required' => FALSE,
   );
 
-  // Define a selection for SSL.
-  $form['metis_force_ssl'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Use SSL to include Metis codes'),
-    '#description' => t('Activate this option if you wish to use a secure connection (SSL) to include Metis codes. In that case the server ssl-vg03.met.vgwort.de will be used.'),
-    '#default_value' => variable_get('metis_force_ssl', NULL),
-  );
-
   $form['status'] = array(
     '#type' => 'markup',
     '#value' => '<p>' . t('<strong>Status:</strong> There are currently %count_codes unused codes left.', array('%count_codes' => metis_count_unused())) . '</p>',
@@ -1055,13 +1047,7 @@ function theme_metis_formatter_default($element = NULL) {
   // code exists, (c) a server exists, (d) on node pages (node/*).
   if ($element['#item']['show'] && !empty($element['#item']['code_public']) && !empty($element['#item']['server']) && arg(0) == 'node' && is_numeric(arg(1))) {
 
-    // Use SSL server if option to use SSL is set.
-    if (variable_get('metis_force_ssl') == 1) {
-      $server = 'https://ssl-vg03.met.vgwort.de';
-    } else {
-      $server = 'http://' . $element['#item']['server'];
-    }
-    $path = $server . '/na/' . $element['#item']['code_public'];
+    $path = 'http://' . $element['#item']['server'] . '/na/' . $element['#item']['code_public'];
     $attributes = array(
       'width' => 1,
       'height' => 1,
