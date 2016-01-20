@@ -1,6 +1,11 @@
 name = Metis
 description = Includes the Metis pixel for VG Wort counts.
-dependencies[] = content
+package = Fields
+dependencies[] = field
 dependencies[] = text
-dependencies[] = optionwidgets
-core = 6.x
+dependencies[] = options
+core = 7.x
+
+files[] = metis.install
+files[] = metis.module
+files[] = metis.views_default.inc

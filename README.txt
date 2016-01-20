@@ -1,5 +1,5 @@
 
-Metis 1.x for Drupal 6.x
+Metis 1.x for Drupal 7.x
 ------------------------
 
 Metis automates the inclusion of the so called "Metis pixel" from the German
@@ -20,7 +20,7 @@ More information about VG Wort and Metis (in German):
 The module allows to
 
 - Add Metis codes (Zaehlmarken) to your Drupal installation
-- Add the Metis codes to nodes as a CCK field with a simple checkbox
+- Add the Metis codes to nodes as a field with a simple checkbox
 - Display a table of nodes with their respective Metis codes (only if Views
   module is installed)
 
@@ -32,10 +32,10 @@ Metis can be installed like any other Drupal module -- place it in the
 modules' directory for your site and enable it on the `admin/build/modules`
 page.
 
-After installing the module, you need to add a CCK field of the type "Metis"
+After installing the module, you need to add a field of the type "Metis"
 to the nodes you want to add Metis codes to.
 
-Metis can be configured through the settings page at `admin/settings/metis`.
+Metis can be configured through the settings page at `admin/config/search/metis`.
 
 
 Maintainers

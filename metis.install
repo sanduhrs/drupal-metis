@@ -10,13 +10,8 @@
  */
 function metis_install() {
 
-  // Use schema API to create database table.
-  drupal_install_schema('metis');
-  drupal_load('module', 'content');
-  content_notify('install', 'metis');
-
   $t = get_t();
-  drupal_set_message($t('Metis settings are available under <a href="@link">Administer > Site configuration > Metis</a>.', array('@link' => '/admin/settings/metis')));
+  drupal_set_message($t('Metis settings are available under <a href="@link">Configuration > Search and Metadata > Metis</a>.', array('@link' => 'admin/config/search/metis')));
 
 }
 
@@ -25,37 +20,9 @@ function metis_install() {
  */
 function metis_uninstall() {
 
-  // Use schema API to delete database table.
-  drupal_uninstall_schema('metis');
-  drupal_load('module', 'content');
-  content_notify('uninstall', 'metis');
-
-  // Delete our module's variable from the variables table.
+  // Delete our module's variables from the variables table.
   variable_del('metis_default_server');
-
-}
-
-/**
- * Implements hook_enable().
- *
- * Notify content module when this module is enabled.
- */
-function metis_enable() {
-
-  drupal_load('module', 'content');
-  content_notify('enable', 'metis');
-
-}
-
-/**
- * Implements hook_disable().
- *
- * Notify content module when this module is disabled.
- */
-function metis_disable() {
-
-  drupal_load('module', 'content');
-  content_notify('disable', 'metis');
+  variable_del('metis_force_ssl');
 
 }
 
@@ -131,4 +98,47 @@ function metis_requirements($phase) {
 
   return $requirements;
 
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function metis_field_schema($field) {
+  switch ($field['type']) {
+    case 'metis' :
+      $columns = array(
+        'code_public' => array(
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => FALSE,
+          'sortable' => TRUE,
+          'views' => TRUE,
+        ),
+        'code_private' => array(
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => FALSE,
+          'sortable' => TRUE,
+          'views' => TRUE,
+        ),
+        'show' => array(
+          'type' => 'int',
+          'length' => 1,
+          'not null' => FALSE,
+          'sortable' => TRUE,
+          'views' => TRUE,
+        ),
+        'server' => array(
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => FALSE,
+          'sortable' => TRUE,
+          'views' => TRUE,
+        ),
+      );
+      break;
+  }
+  return array(
+    'columns' => $columns,
+  );
 }
