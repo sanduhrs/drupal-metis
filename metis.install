@@ -11,7 +11,7 @@
 function metis_install() {
 
   $t = get_t();
-  drupal_set_message($t('Metis settings are available under <a href="@link">Configuration > Search and Metadata > Metis</a>.', array('@link' => 'admin/config/search/metis')));
+  drupal_set_message($t('Metis settings are available under <a href="@link">Configuration > Search and Metadata > Metis</a>.', array('@link' => '/admin/config/search/metis')));
 
 }
 
