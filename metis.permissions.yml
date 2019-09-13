@@ -1,0 +1,7 @@
+administer metis module:
+  title: 'Administer Metis configuration'
+  restrict access: true
+add metis codes to nodes:
+  title: 'Add Metis codes to nodes'
+import metis codes:
+  title: 'Import Metis codes'
