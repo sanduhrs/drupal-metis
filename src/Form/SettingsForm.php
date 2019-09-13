@@ -34,7 +34,6 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('Please select the default Metis server to be used when uploading codes. If your website is registered with VG Wort as an editorial, you will be assigned a server that you should use permanently.'),
       '#default_value' => $this->config('metis.settings')->get('metis_default_server'),
       '#options' => array(
-        NULL => t('Please select'),
         'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
         'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
         'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
