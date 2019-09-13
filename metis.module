@@ -7,6 +7,8 @@
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -197,4 +199,64 @@ function metis_entity_field_access($operation, FieldDefinitionInterface $field_d
     return AccessResult::allowedIfHasPermission($account, 'add metis codes to nodes');
   }
   return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function metis_entity_presave(EntityInterface $entity) {
+  /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+  $entity_field_manager = \Drupal::getContainer()->get('entity_field.manager');
+  $field_definitions = $entity_field_manager->getFieldDefinitions(
+    $entity->getEntityTypeId(), $entity->bundle()
+  );
+
+  foreach ($field_definitions as $field) {
+    if ($field->getType() === 'metis') {
+      $field_name = $field->getName();
+      $properties = $entity->getTypedData()->getProperties();
+
+      // Stop if no items where saved.
+      if ($show = $properties[$field_name]->__get('show')) {
+        // Get an unused code.
+        $unused = metis_get_unused();
+
+        // Check if a public metis code is set already.
+        // If not and the "show" option is selected, add a new one.
+        if ($unused && empty($properties[$field_name]->__get('code_public')) && $show == 1) {
+          if (is_array($unused)) {
+            $properties['field_metis']->__set('code_public', $unused['code_public']);
+            $properties['field_metis']->__set('code_private', $unused['code_private']);
+            $properties['field_metis']->__set('server', $unused['server']);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function metis_entity_insert(EntityInterface $entity) {
+  /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+  $entity_field_manager = \Drupal::getContainer()->get('entity_field.manager');
+  $field_definitions = $entity_field_manager->getFieldDefinitions(
+    $entity->getEntityTypeId(), $entity->bundle()
+  );
+
+  foreach ($field_definitions as $field) {
+    if ($field->getType() === 'metis') {
+      $field_name = $field->getName();
+      $properties = $entity->getTypedData()->getProperties();
+
+      // Stop if no items where saved.
+      if (
+        $properties[$field_name]->__get('show') &&
+        $code_public = $properties[$field_name]->__get('code_public')
+      ) {
+        metis_set_used($code_public, $entity->id());
+      }
+    }
+  }
 }
