@@ -14,9 +14,9 @@ field.value.metis:
     code_private:
       type: string
       label: Private code
+    show:
+      type: boolean
+      label: Show
     server:
       type: string
       label: Server
-    used:
-      type: string
-      label: used
