@@ -5,6 +5,12 @@
  * Primary module hooks for Metis module.
  */
 
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Session\AccountInterface;
+
 /**
  * Implements hook_theme().
  */
@@ -97,7 +103,9 @@ function template_preprocess_metis_show(array &$variables) {
   $variables['foo'] = 'bar';
 }
 
-// @todo remove this dummy.
+/**
+ * Count unused codes.
+ */
 function metis_count_unused() {
   $connection = \Drupal::database();
   $query = $connection->select('metis', 'm');
@@ -109,4 +117,74 @@ function metis_count_unused() {
   $num_rows = $count_query->countQuery()->execute()->fetchField();
 
   return $num_rows;
+}
+
+/**
+ * Get unused code.
+ */
+function metis_get_unused() {
+  $connection = \Drupal::database();
+
+  $query = $connection->select('metis', 'm');
+  $query
+    ->fields('m', ['code_public', 'code_private', 'server'])
+    ->condition('m.used', 0, '=');
+
+  $count_query = $query->countQuery();
+  $results = $count_query->countQuery()->execute()->fetchField();
+
+  // If there are no unused codes, return FALSE.
+  if ($results == 0) {
+    return FALSE;
+  }
+  // If there are unused codes, return an array
+  // with public and private metis code.
+  else {
+    $query = $connection->select('metis', 'm');
+    $query
+      ->fields('m', ['code_public', 'code_private', 'server'])
+      ->condition('m.used', 0, '=');
+
+    $results = $query->range(0, 1)->execute()->fetchAssoc();
+    return array(
+      'code_public' => $results['code_public'],
+      'code_private' => $results['code_private'],
+      'server' => $results['server'],
+    );
+  }
+}
+
+/**
+ * Set code used.
+ */
+function metis_set_used($code_public, $nid) {
+  // Check if code has 32 characters and nid is present.
+  if (Unicode::strlen($code_public) == 32 && is_numeric($nid)) {
+
+    // Update database and set used codes as used.
+    try {
+      $connection = \Drupal::database();
+      $query = $connection->update('metis');
+      $query
+        ->fields([
+          'used' => $nid,
+        ])
+        ->condition('code_public', $code_public)
+        ->condition('used', 0)
+      ->execute();
+      // No exception thrown; PDO thinks the record was inserted correctly.
+      $message = t('Code %public_code has been set as "used" by node %nid.', ['%public_code' => $code_public, '%nid' => $nid]);
+      \Drupal::logger('metis')->notice($message);
+    }
+    catch (PDOException $e) {
+      $message = t('Code %public_code could not be set as "used" by node %nid. Error message: :error_message', ['%public_code' => $code_public, '%nid' => $nid, ':error_message' => $e->getMessage()]);
+      \Drupal::logger('metis')->error($message);
+      return FALSE;
+    }
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+
 }
