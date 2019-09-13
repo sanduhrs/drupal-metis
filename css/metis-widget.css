@@ -4,3 +4,6 @@
 .container-inline.metis-elements label {
   display: block;
 }
+tr.odd .metis-elements .form-item {
+  margin-bottom: 8px;
+}
