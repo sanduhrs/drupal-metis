@@ -10,7 +10,7 @@ use Drupal\Core\Field\FormatterBase;
  *
  * @FieldFormatter(
  *   id = "metis_default",
- *   label = @Translation("Default"),
+ *   label = @Translation("Metis pixel as <img>"),
  *   field_types = {"metis"}
  * )
  */
@@ -40,19 +40,17 @@ class MetisDefaultFormatter extends FormatterBase {
         ];
       }
 
+      $element[$delta]['show'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Show'),
+        '#markup' => $item->show ? $this->t('Yes') : $this->t('No'),
+      ];
+
       if ($item->server) {
         $element[$delta]['server'] = [
           '#type' => 'item',
           '#title' => $this->t('Server'),
           '#markup' => $item->server,
-        ];
-      }
-
-      if ($item->used) {
-        $element[$delta]['used'] = [
-          '#type' => 'item',
-          '#title' => $this->t('used'),
-          '#markup' => $item->used,
         ];
       }
 
