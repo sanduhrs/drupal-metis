@@ -24,6 +24,9 @@ class MetisDefaultFormatter extends FormatterBase {
     $config = \Drupal::config('metis.settings');
 
     foreach ($items as $delta => $item) {
+      if (!$item->show) {
+        break;
+      }
 
       // Use SSL server if option to use SSL is set.
       $protocol = $config->get('metis_force_ssl') ? 'https' : 'http';
@@ -34,7 +37,6 @@ class MetisDefaultFormatter extends FormatterBase {
       ];
       return $element;
     }
-
     return $element;
   }
 
