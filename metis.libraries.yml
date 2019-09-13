@@ -1,0 +1,4 @@
+metis:
+  css:
+    component:
+      css/metis-widget.css: {}

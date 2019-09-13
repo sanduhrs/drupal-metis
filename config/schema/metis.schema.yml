@@ -1,0 +1,16 @@
+field.value.metis:
+  type: mapping
+  label: Default value
+  mapping:
+    code_public:
+      type: string
+      label: Public code
+    code_private:
+      type: string
+      label: Private code
+    server:
+      type: string
+      label: Server
+    used:
+      type: string
+      label: used
