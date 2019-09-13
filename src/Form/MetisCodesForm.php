@@ -32,20 +32,20 @@ class MetisCodesForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('metis.settings');
 
-    $form['code'] = array(
+    $form['code'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Metis code'),
       '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code must be 32 letters long.</strong>'),
       '#cols' => 32,
       '#rows' => 20,
       '#required' => TRUE,
-    );
-    $form['server'] = array(
+    ];
+    $form['server'] = [
       '#type' => 'select',
       '#title' => $this->t('Metis Server'),
       '#description' => t('Please select a Metis server to be associated with the imported codes.'),
       '#default_value' => $config->get('metis_default_server'),
-      '#options' => array(
+      '#options' => [
         'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
         'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
         'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
@@ -55,9 +55,9 @@ class MetisCodesForm extends ConfigFormBase {
         'vg07.met.vgwort.de' => 'vg07.met.vgwort.de',
         'vg08.met.vgwort.de' => 'vg08.met.vgwort.de',
         'vg09.met.vgwort.de' => 'vg09.met.vgwort.de',
-      ),
+      ],
       '#required' => TRUE,
-    );
+    ];
     return parent::buildForm($form, $form_state);
   }
 
@@ -77,12 +77,11 @@ class MetisCodesForm extends ConfigFormBase {
       $items = explode(';', $row);
 
       // Prepare array for validation.
-      $codes[] = array(
+      $codes[] = [
         'public' => SafeMarkup::checkPlain(trim($items[0])),
         'private' => SafeMarkup::checkPlain(trim($items[1])),
         'server' => $form_state['values']['server'],
-      );
-
+      ];
     }
 
     // Add validated codes to $form_state.
@@ -109,8 +108,8 @@ class MetisCodesForm extends ConfigFormBase {
    *
    * @param array $codes
    *   An array of arrays containing the code values. Valid arguments are:
-   *     - 'public' => string containing the 32 letter public metis code;
-   *     - 'private' => string containing the 32 letter private metis code;
+   *     - 'public' => string containing the 32 letter public metis code.
+   *     - 'private' => string containing the 32 letter private metis code.
    *
    * @return array
    *   An array with the validated codes split up into arrays:
@@ -121,16 +120,16 @@ class MetisCodesForm extends ConfigFormBase {
    *     - 'valid' => codes that are valid.
    *     - 'error_validaton' => the $codes variable that led to an error.
    */
-  public static function codeValidation($codes) {
+  public static function codeValidation(array $codes) {
     $codes_validated = [];
     if (is_array($codes)) {
       // Patterns to be ignored.
-      $patterns = array(
+      $patterns = [
         'Öffentlicher',
         'Identifikationscode',
         'Privater',
         'VG Wort',
-      );
+      ];
 
       foreach ($codes as $code) {
         // Variable used to determine if code should be ignored.

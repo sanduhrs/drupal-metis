@@ -7,7 +7,6 @@
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
@@ -148,11 +147,11 @@ function metis_get_unused() {
       ->condition('m.used', 0, '=');
 
     $results = $query->range(0, 1)->execute()->fetchAssoc();
-    return array(
+    return [
       'code_public' => $results['code_public'],
       'code_private' => $results['code_private'],
       'server' => $results['server'],
-    );
+    ];
   }
 }
 
@@ -173,13 +172,27 @@ function metis_set_used($code_public, $nid) {
         ])
         ->condition('code_public', $code_public)
         ->condition('used', 0)
-      ->execute();
+        ->execute();
+
       // No exception thrown; PDO thinks the record was inserted correctly.
-      $message = t('Code %public_code has been set as "used" by node %nid.', ['%public_code' => $code_public, '%nid' => $nid]);
+      $message = t(
+        'Code %public_code has been set as "used" by node %nid.',
+        [
+          '%public_code' => $code_public,
+          '%nid' => $nid,
+        ]
+      );
       \Drupal::logger('metis')->notice($message);
     }
     catch (PDOException $e) {
-      $message = t('Code %public_code could not be set as "used" by node %nid. Error message: :error_message', ['%public_code' => $code_public, '%nid' => $nid, ':error_message' => $e->getMessage()]);
+      $message = t(
+        'Code %public_code could not be set as "used" by node %nid. Error message: :error_message',
+        [
+          '%public_code' => $code_public,
+          '%nid' => $nid,
+          ':error_message' => $e->getMessage(),
+        ]
+      );
       \Drupal::logger('metis')->error($message);
       return FALSE;
     }

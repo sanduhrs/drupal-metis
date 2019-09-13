@@ -47,7 +47,7 @@ class SettingsForm extends ConfigFormBase {
       '#title' => $this->t('Default Metis server'),
       '#description' => $this->t('Please select the default Metis server to be used when uploading codes. If your website is registered with VG Wort as an editorial, you will be assigned a server that you should use permanently.'),
       '#default_value' => $this->config('metis.settings')->get('metis_default_server'),
-      '#options' => array(
+      '#options' => [
         'vg01.met.vgwort.de' => 'vg01.met.vgwort.de',
         'vg02.met.vgwort.de' => 'vg02.met.vgwort.de',
         'vg03.met.vgwort.de' => 'vg03.met.vgwort.de',
@@ -57,7 +57,7 @@ class SettingsForm extends ConfigFormBase {
         'vg07.met.vgwort.de' => 'vg07.met.vgwort.de',
         'vg08.met.vgwort.de' => 'vg08.met.vgwort.de',
         'vg09.met.vgwort.de' => 'vg09.met.vgwort.de',
-      ),
+      ],
     ];
     $form['metis_force_ssl'] = [
       '#type' => 'checkbox',
@@ -65,11 +65,11 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('Activate this option if you wish to use a secure connection (SSL) to include Metis codes. In that case the server ssl-vg03.met.vgwort.de will be used.'),
       '#default_value' => $this->config('metis.settings')->get('metis_force_ssl'),
     ];
-    $form['status'] = array(
+    $form['status'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('<strong>Status:</strong> There are currently %count_codes unused codes left.', ['%count_codes' => metis_count_unused()]) . '</p>',
       '#weight' => -3,
-    );
+    ];
     return parent::buildForm($form, $form_state);
   }
 
