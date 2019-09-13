@@ -1,0 +1,78 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Metis module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function metis_schema() {
+  $schema['metis'] = [
+    'description' => 'Stores codes to use with the Metis pixel.',
+    'fields' => [
+      'code_public' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'code_private' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'used' => [
+        'type' => 'int',
+        'length' => 1,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'server' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+  ];
+  return $schema;
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function metis_requirements($phase) {
+  $requirements = [];
+  if ($phase == 'runtime') {
+    // @todo
+    $unused = metis_count_unused();
+
+    if ($unused == 0) {
+      $severity = REQUIREMENT_ERROR;
+      $value = t('There are no unused codes left.');
+    }
+    else {
+      $severity = REQUIREMENT_OK;
+      $value = t(
+        'There are %count_codes unused codes left.',
+        [
+          '%count_codes' => $unused,
+        ]
+      );
+    }
+    $requirements['metis_dependencies'] = array(
+      'title' => t('Metis'),
+      'severity' => $severity,
+      'value' => $value,
+    );
+  }
+  return $requirements;
+}
+
+// @todo remove this dummy.
+function metis_count_unused() {
+  return 0;
+}
