@@ -22,30 +22,36 @@ class MetisWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
-
     $element['code_public'] = [
-      '#type' => 'textfield',
+      '#type' => 'hidden',
       '#title' => $this->t('Public code'),
       '#default_value' => isset($items[$delta]->code_public) ? $items[$delta]->code_public : NULL,
     ];
-
     $element['code_private'] = [
-      '#type' => 'textfield',
+      '#type' => 'hidden',
       '#title' => $this->t('Private code'),
       '#default_value' => isset($items[$delta]->code_private) ? $items[$delta]->code_private : NULL,
     ];
-
-    $element['show'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Show'),
-      '#default_value' => isset($items[$delta]->show) ? $items[$delta]->show : NULL,
-    ];
-
     $element['server'] = [
-      '#type' => 'textfield',
+      '#type' => 'hidden',
       '#title' => $this->t('Server'),
       '#default_value' => isset($items[$delta]->server) ? $items[$delta]->server : NULL,
     ];
+    $element['show'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Include public metis code in article (enable count)'),
+      '#default_value' => isset($items[$delta]->show) ? $items[$delta]->show : NULL,
+      '#description' => '<p><b>' . $this->t('Please note: VG Wort requires at least 1800 characters for a text to be qualified for submission.') . '</b></p>',
+    ];
+
+    if (TRUE) {
+      $element['show']['#description'] .=
+        '<p>' .
+          $this->t('Public metis code: %code', ['%code' => $items[$delta]->code_public]) . '<br /> ' .
+          $this->t('Private metis code: %code', ['%code' => $items[$delta]->code_private]) . '<br /> ' .
+          $this->t('Metis Server: %server', ['%server' => $items[$delta]->server]) .
+        '</p>';
+    }
 
     $element['#theme_wrappers'] = ['container', 'form_element'];
     $element['#attributes']['class'][] = 'metis-elements';
