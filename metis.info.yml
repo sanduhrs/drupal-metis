@@ -3,3 +3,4 @@ type: module
 description: Includes the Metis pixel for VG Wort counts.
 package: Metis
 core: 8.x
+configure: metis.settings
