@@ -1,0 +1,5 @@
+metis.settings:
+  title: Metis settings
+  parent: system.admin_config_search
+  route_name: metis.settings
+  weight: 10

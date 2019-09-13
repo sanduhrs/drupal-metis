@@ -1,0 +1,7 @@
+metis.settings:
+  path: '/admin/config/search/metis'
+  defaults:
+    _title: 'Metis'
+    _form: 'Drupal\metis\Form\SettingsForm'
+  requirements:
+    _permission: 'administer metis module'
