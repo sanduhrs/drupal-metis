@@ -31,10 +31,10 @@ class MetisItem extends FieldItemBase {
     elseif ($this->code_private !== NULL) {
       return FALSE;
     }
-    elseif ($this->server !== NULL) {
+    elseif ($this->show == 1) {
       return FALSE;
     }
-    elseif ($this->used !== NULL) {
+    elseif ($this->server !== NULL) {
       return FALSE;
     }
     return TRUE;
@@ -44,16 +44,14 @@ class MetisItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-
     $properties['code_public'] = DataDefinition::create('string')
       ->setLabel(t('Public code'));
     $properties['code_private'] = DataDefinition::create('string')
       ->setLabel(t('Private code'));
+    $properties['show'] = DataDefinition::create('boolean')
+      ->setLabel(t('Show'));
     $properties['server'] = DataDefinition::create('string')
       ->setLabel(t('Server'));
-    $properties['used'] = DataDefinition::create('string')
-      ->setLabel(t('used'));
-
     return $properties;
   }
 
@@ -62,15 +60,6 @@ class MetisItem extends FieldItemBase {
    */
   public function getConstraints() {
     $constraints = parent::getConstraints();
-
-    $options['code_public']['NotBlank'] = [];
-
-    $options['code_private']['NotBlank'] = [];
-
-    $options['server']['NotBlank'] = [];
-
-    $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
-    $constraints[] = $constraint_manager->create('ComplexData', $options);
     // @todo Add more constrains here.
     return $constraints;
   }
@@ -79,23 +68,22 @@ class MetisItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
-
     $columns = [
       'code_public' => [
         'type' => 'varchar',
-        'length' => 255,
+        'length' => 32,
       ],
       'code_private' => [
         'type' => 'varchar',
-        'length' => 255,
+        'length' => 32,
+      ],
+      'show' => [
+        'type' => 'int',
+        'size' => 'tiny',
       ],
       'server' => [
         'type' => 'varchar',
-        'length' => 255,
-      ],
-      'used' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'length' => 256,
       ],
     ];
 
@@ -103,7 +91,6 @@ class MetisItem extends FieldItemBase {
       'columns' => $columns,
       // @DCG Add indexes here if necessary.
     ];
-
     return $schema;
   }
 
@@ -111,17 +98,15 @@ class MetisItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function generateSampleValue(FieldDefinitionInterface $field_definition) {
-
     $random = new Random();
-
-    $values['code_public'] = $random->word(mt_rand(1, 255));
-
-    $values['code_private'] = $random->word(mt_rand(1, 255));
-
-    $values['server'] = $random->word(mt_rand(1, 255));
-
-    $values['used'] = $random->word(mt_rand(1, 255));
-
+    $values['code_public'] = $random->word(mt_rand(1, 32));
+    $values['code_private'] = $random->word(mt_rand(1, 32));
+    $values['show'] = (bool) mt_rand(0, 1);
+    $values['server'] = implode('.', [
+      'www.',
+      $random->word(mt_rand(1, 248)),
+      '.org',
+    ]);
     return $values;
   }
 
