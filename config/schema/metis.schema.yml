@@ -1,3 +1,9 @@
+metis_default_server:
+  type: string
+  label: Default server
+metis_force_ssl:
+  type: boolean
+  label: Force SSL
 field.value.metis:
   type: mapping
   label: Default value
