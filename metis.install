@@ -71,17 +71,3 @@ function metis_requirements($phase) {
   }
   return $requirements;
 }
-
-// @todo remove this dummy.
-function metis_count_unused() {
-  $connection = \Drupal::database();
-  $query = $connection->select('metis', 'm');
-  $query
-    ->condition('m.used', 0, '=')
-    ->addField('m', 'code_public');
-
-  $count_query = $query->countQuery();
-  $num_rows = $query->countQuery()->execute()->fetchField();
-
-  return $num_rows;
-}
