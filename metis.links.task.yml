@@ -1,0 +1,14 @@
+metis.metis_settings_tab:
+  route_name: metis.settings
+  title: 'Settings'
+  base_route: metis.settings
+metis.codes:
+  route_name: metis.codes
+  title: 'Paste Metis codes'
+  base_route: metis.settings
+  weight: 10
+metis.codes_csv:
+  route_name: metis.codes_csv
+  title: 'Import Metis codes from CSV'
+  base_route: metis.settings
+  weight: 10
