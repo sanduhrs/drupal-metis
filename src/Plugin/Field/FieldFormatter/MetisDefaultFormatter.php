@@ -10,7 +10,7 @@ use Drupal\Core\Field\FormatterBase;
  *
  * @FieldFormatter(
  *   id = "metis_default",
- *   label = @Translation("Metis pixel as <img>"),
+ *   label = @Translation("Metis pixel as image"),
  *   field_types = {"metis"}
  * )
  */
@@ -21,39 +21,18 @@ class MetisDefaultFormatter extends FormatterBase {
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $element = [];
+    $config = \Drupal::config('metis.settings');
 
     foreach ($items as $delta => $item) {
 
-      if ($item->code_public) {
-        $element[$delta]['code_public'] = [
-          '#type' => 'item',
-          '#title' => $this->t('Public code'),
-          '#markup' => $item->code_public,
-        ];
-      }
+      // Use SSL server if option to use SSL is set.
+      $protocol = $config->get('metis_force_ssl') ? 'https' : 'http';
 
-      if ($item->code_private) {
-        $element[$delta]['code_private'] = [
-          '#type' => 'item',
-          '#title' => $this->t('Private code'),
-          '#markup' => $item->code_private,
-        ];
-      }
-
-      $element[$delta]['show'] = [
-        '#type' => 'item',
-        '#title' => $this->t('Show'),
-        '#markup' => $item->show ? $this->t('Yes') : $this->t('No'),
+      // Intentionally _not_ using a template function here.
+      $element[$delta]['metis'] = [
+        '#markup' => '<img src="' . $protocol . '://' . $item->server . '/na/' . $item->code_public . '" height="1" width="1" border="0"/>',
       ];
-
-      if ($item->server) {
-        $element[$delta]['server'] = [
-          '#type' => 'item',
-          '#title' => $this->t('Server'),
-          '#markup' => $item->server,
-        ];
-      }
-
+      return $element;
     }
 
     return $element;

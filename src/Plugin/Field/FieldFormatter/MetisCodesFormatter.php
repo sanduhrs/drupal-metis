@@ -12,7 +12,7 @@ use Drupal\Core\Field\FormatterBase;
  *   id = "metis_codes",
  *   label = @Translation("Metis codes"),
  *   field_types = {
- *     "string"
+ *     "metis"
  *   }
  * )
  */
@@ -26,7 +26,11 @@ class MetisCodesFormatter extends FormatterBase {
 
     foreach ($items as $delta => $item) {
       $element[$delta] = [
-        '#markup' => $item->value,
+        '#theme' => 'metis_codes',
+        '#code_public' => $item->code_public,
+        '#code_private' => $item->code_private,
+        '#server' => $item->server,
+        '#show' => $item->show,
       ];
     }
 

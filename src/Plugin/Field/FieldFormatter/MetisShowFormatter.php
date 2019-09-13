@@ -12,7 +12,7 @@ use Drupal\Core\Field\FormatterBase;
  *   id = "metis_show",
  *   label = @Translation("Show metis pixel (yes/no)"),
  *   field_types = {
- *     "string"
+ *     "metis"
  *   }
  * )
  */
@@ -26,7 +26,11 @@ class MetisShowFormatter extends FormatterBase {
 
     foreach ($items as $delta => $item) {
       $element[$delta] = [
-        '#markup' => $item->value,
+        '#theme' => 'metis_show',
+        '#code_public' => $item->code_public,
+        '#code_private' => $item->code_private,
+        '#server' => $item->server,
+        '#show' => $item->show,
       ];
     }
 

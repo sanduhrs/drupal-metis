@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display something.
+ *
+ * Available variables:
+ * - code_public: The public metis code.
+ * - code_private: The private metis code.
+ * - server: The metis server.
+ * - show: The field setting to show (1) or not (0) the code.
+ *
+ * @see template_preprocess_metis_codes()
+ *
+ * @ingroup themeable
+ */
+#}
+<div class="metis metis--codes">
+  <p>
+    <strong>{{ 'Public metis code'|t }}:</strong> {{ code_public }}<br />
+    <strong>{{ 'Private metis code'|t }}:</strong> {{ code_private }}<br />
+  </p>
+</div>

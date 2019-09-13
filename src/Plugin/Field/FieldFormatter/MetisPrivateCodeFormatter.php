@@ -12,11 +12,11 @@ use Drupal\Core\Field\FormatterBase;
  *   id = "metis_code_private",
  *   label = @Translation("Private metis code"),
  *   field_types = {
- *     "string"
+ *     "metis"
  *   }
  * )
  */
-class Private metis code extends FormatterBase {
+class MetisPrivateCodeFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}
@@ -26,7 +26,11 @@ class Private metis code extends FormatterBase {
 
     foreach ($items as $delta => $item) {
       $element[$delta] = [
-        '#markup' => $item->value,
+        '#theme' => 'metis_code_private',
+        '#code_public' => $item->code_public,
+        '#code_private' => $item->code_private,
+        '#server' => $item->server,
+        '#show' => $item->show,
       ];
     }
 
