@@ -28,6 +28,20 @@ class SettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager */
+    $entity_field_manager = \Drupal::getContainer()->get('entity_field.manager');
+    $field_map = $entity_field_manager->getFieldMapByFieldType('metis');
+
+    // Display warning if no Metis field is configured.
+    if (!isset($field_map['node'])) {
+      drupal_set_message(t('There is no Metis field configured. Please add a field of the type <em>Metis</em> to at least one content type to make this module work.'), 'error');
+    }
+
+    // Display warning if no unused codes left.
+    if (metis_count_unused() == 0) {
+      drupal_set_message($this->t('There are no unused codes left. Please add some.'), 'error');
+    }
+
     $form['metis_default_server'] = [
       '#type' => 'select',
       '#title' => $this->t('Default Metis server'),
@@ -51,6 +65,11 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('Activate this option if you wish to use a secure connection (SSL) to include Metis codes. In that case the server ssl-vg03.met.vgwort.de will be used.'),
       '#default_value' => $this->config('metis.settings')->get('metis_force_ssl'),
     ];
+    $form['status'] = array(
+      '#type' => 'markup',
+      '#markup' => '<p>' . $this->t('<strong>Status:</strong> There are currently %count_codes unused codes left.', ['%count_codes' => metis_count_unused()]) . '</p>',
+      '#weight' => -3,
+    );
     return parent::buildForm($form, $form_state);
   }
 
