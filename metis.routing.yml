@@ -8,14 +8,14 @@ metis.settings:
 metis.codes:
   path: '/admin/config/search/metis/codes'
   defaults:
-    _title: 'Metis codes'
+    _title: 'Metis codes import'
     _form: 'Drupal\metis\Form\MetisCodesForm'
   requirements:
     _permission: 'add site-wide metis codes'
 metis.codes_csv:
   path: '/admin/config/search/metis/codes-csv'
   defaults:
-    _title: 'Metis'
+    _title: 'Metis CSV import'
     _form: 'Drupal\metis\Form\MetisCodesCSVForm'
   requirements:
     _permission: 'add site-wide metis codes'

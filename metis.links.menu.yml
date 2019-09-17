@@ -1,5 +1,6 @@
 metis.settings:
-  title: Metis settings
+  title: Metis
+  description: Metis list, configuration and import.
   parent: system.admin_config_search
   route_name: metis.settings
   weight: 10

@@ -1,0 +1,21 @@
+uuid: 5ad56cf9-c0fc-4699-bad2-08533f8e33ca
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_metis
+    - node.type.article
+  module:
+    - metis
+id: node.article.field_metis
+field_name: field_metis
+entity_type: node
+bundle: article
+label: Metis
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metis
