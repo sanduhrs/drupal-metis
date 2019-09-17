@@ -6,11 +6,13 @@ use Drupal\Component\Utility\SafeMarkup;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerTrait;
 
 /**
  * Configure Metis settings for this site.
  */
 class MetisCodesForm extends ConfigFormBase {
+  use MessengerTrait;
 
   /**
    * {@inheritdoc}
@@ -32,7 +34,7 @@ class MetisCodesForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('metis.settings');
 
-    $form['code'] = [
+    $form['codes'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Metis code'),
       '#description' => t('Please enter Metis codes you want to save in the format [public_code];[private_code]. <strong>One per line. Every code must be 32 letters long.</strong>'),
@@ -65,12 +67,14 @@ class MetisCodesForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $input = $form_state->getValue('codes');
+
     // Get rid of white spaces.
-    $input = trim($form_state->getValue('code'));
+    $input = trim(str_replace(" ", "", $input));
+    // Get rid of newline variations.
+    $input = str_replace("\r\n", "\n", $input);
     // Split by line.
     $rows = explode("\n", $input);
-    // Remove any extra \r characters left behind.
-    $rows = array_filter($rows, 'trim');
 
     $codes = [];
     foreach ($rows as $row) {
@@ -80,16 +84,14 @@ class MetisCodesForm extends ConfigFormBase {
       $codes[] = [
         'public' => trim($items[0]),
         'private' => trim($items[1]),
-        'server' => $form_state['values']['server'],
+        'server' => $form_state->getValue('server'),
       ];
     }
 
     // Add validated codes to $form_state.
-    $form_state->setValue('validated', self::codeValidation($codes));
+    $validated_codes = $this->codeValidation($codes);
+    $form_state->setValue('validated', $validated_codes);
 
-    if ($form_state->getValue('example') != 'example') {
-      $form_state->setErrorByName('example', $this->t('The value is not correct.'));
-    }
     parent::validateForm($form, $form_state);
   }
 
@@ -97,14 +99,13 @@ class MetisCodesForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->config('metis.settings')
-      ->set('example', $form_state->getValue('example'))
-      ->save();
+    $codes = $form_state->getValue('validated');
+    $this->codeSubmission($codes);
     parent::submitForm($form, $form_state);
   }
 
   /**
-   * Validate submitted codes.
+   * Validate codes.
    *
    * @param array $codes
    *   An array of arrays containing the code values. Valid arguments are:
@@ -118,10 +119,9 @@ class MetisCodesForm extends ConfigFormBase {
    *     - 'private_length' => private metis codes longer than 32 characters.
    *     - 'code_exists' => codes that already exists in db.
    *     - 'valid' => codes that are valid.
-   *     - 'error_validaton' => the $codes variable that led to an error.
+   *     - 'error_validation' => the $codes variable that led to an error.
    */
-  public static function codeValidation(array $codes) {
-    $codes_validated = [];
+  public function codeValidation(array $codes) {
     if (is_array($codes)) {
       // Patterns to be ignored.
       $patterns = [
@@ -139,7 +139,7 @@ class MetisCodesForm extends ConfigFormBase {
         foreach ($patterns as $pattern) {
           if (stripos($code['public'], $pattern) || stripos($code['private'], $pattern)) {
             // Save ignored codes in an array.
-            $codes_validated['ignored'][] = $code;
+            $codes['ignored'][] = $code;
             $ignore = TRUE;
             break;
           }
@@ -155,31 +155,90 @@ class MetisCodesForm extends ConfigFormBase {
 
           // Error if code is already in db.
           if ($results != 0) {
-            $codes_validated['code_exists'][] = $code;
+            $codes['code_exists'][] = $code;
           }
           // Error if public metis code is too long.
           elseif (mb_strlen($code['public']) != 32) {
-            $codes_validated['public_length'][] = $code;
+            $codes['public_length'][] = $code;
           }
           // Error if private metis code is too long.
           elseif ($code['private'] && mb_strlen($code['private']) != 32) {
-            $codes_validated['private_length'][] = $code;
+            $codes['private_length'][] = $code;
           }
           // Error if server doesn't match.
           elseif (preg_match('#vg[0-9]{2}\.met\.vgwort\.de#', $code['server']) == 0) {
-            $codes_validated['server'][] = $code;
+            $codes['server'][] = $code;
           }
           // Valid code.
           else {
-            $codes_validated['valid'][] = $code;
+            $codes['valid'][] = $code;
           }
         }
       }
     }
     else {
-      $codes_validated['error_validaton'][] = $codes;
+      $codes['error_validation'][] = $codes;
     }
-    return $codes_validated;
+    return $codes;
+  }
+
+  /**
+   * Submit codes.
+   *
+   * @param array $codes
+   *   An array of arrays containing the validated codes, valid arguments are:
+   *     - 'public' => string containing the 32 letter public metis code;
+   *     - 'private' => string containing the 32 letter private metis code;
+   */
+  public function codeSubmission($codes) {
+    $count_submit = 0;
+    $count_error = 0;
+
+    // Submit valid codes.
+    if (isset($codes['valid'])) {
+      foreach ($codes['valid'] as $code) {
+        try {
+          $query = \Drupal::database()->insert('metis');
+          $query->fields([
+            'code_public' => $code['public'],
+            'code_private' => $code['private'],
+            'server' => $code['server'],
+          ]);
+          $query->execute();
+          // No exception thrown; PDO thinks the record was inserted correctly.
+          $count_submit++;
+        }
+        catch (\Exception $e) {
+          $count_error++;
+        }
+      }
+    }
+
+    // Set confirmation message.
+    if ($count_submit > 0) {
+      $this->messenger()->addStatus(t('%count codes have been saved.', ['%count' => $count_submit]));
+    }
+    if (isset($codes['ignored']) && $count = count($codes['ignored'])) {
+      $this->messenger()->addWarning(t('%count line(s) have been ignored.', ['%count' => $count]));
+    }
+    if (isset($codes['public_length']) && $count = count($codes['public_length'])) {
+      $this->messenger()->addWarning(t('%count codes have not been saved because the public metis code is not 32 letters long.', ['%count' => $count]));
+    }
+    if (isset($codes['private_length']) && $count = count($codes['private_length'])) {
+      $this->messenger()->addWarning(t('%count codes have not been saved because the private metis code is not 32 letters long.', ['%count' => $count]));
+    }
+    if (isset($codes['server']) && $count = count($codes['server'])) {
+      $this->messenger()->addWarning(t("%count codes have not been saved because the server wasn't valid.", ['%count' => $count]));
+    }
+    if (isset($codes['code_exists']) && $count = count($codes['code_exists'])) {
+      $this->messenger()->addWarning(t('%count codes have not been saved because they already existed.', ['%count' => $count]));
+    }
+    if (isset($codes['error_validation']) && $count = count($codes['error_validation'])) {
+      $this->messenger()->addError(t('There have been %count validation errors.', ['%count' => $count]));
+    }
+    if ($count_error > 0) {
+      $this->messenger()->addError(t('%count codes have not been saved because of an error.', ['%count' => $count_error]));
+    }
   }
 
 }
