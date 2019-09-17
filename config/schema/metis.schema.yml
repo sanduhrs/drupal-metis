@@ -4,6 +4,12 @@ metis_default_server:
 metis_force_ssl:
   type: boolean
   label: Force SSL
+username:
+  type: string
+  label: SOAP service username
+password:
+  type: string
+  label: SOAP service password
 field.value.metis:
   type: mapping
   label: Default value

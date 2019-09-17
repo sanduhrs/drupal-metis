@@ -253,6 +253,9 @@ function metis_entity_presave(EntityInterface $entity) {
             $properties['field_metis']->__set('server', $unused['server']);
           }
         }
+        else {
+          //@todo Get new code from webservice.
+        }
       }
     }
   }
