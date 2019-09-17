@@ -2,8 +2,6 @@
 
 namespace Drupal\metis\Form;
 
-use Drupal\Component\Utility\SafeMarkup;
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerTrait;
@@ -187,10 +185,10 @@ class MetisCodesForm extends ConfigFormBase {
    *
    * @param array $codes
    *   An array of arrays containing the validated codes, valid arguments are:
-   *     - 'public' => string containing the 32 letter public metis code;
-   *     - 'private' => string containing the 32 letter private metis code;
+   *     - 'public' => string containing the 32 letter public metis code.
+   *     - 'private' => string containing the 32 letter private metis code.
    */
-  public function codeSubmission($codes) {
+  public function codeSubmission(array $codes) {
     $count_submit = 0;
     $count_error = 0;
 

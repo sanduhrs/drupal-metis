@@ -2,8 +2,6 @@
 
 namespace Drupal\metis\Form;
 
-use Drupal\Core\File\FileSystem;
-use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -22,7 +20,7 @@ class MetisCodesCSVForm extends MetisCodesForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['file_csv'] = array(
+    $form['file_csv'] = [
       '#type' => 'file',
       '#title' => t('CSV file with Metis codes'),
       '#description' => t('Please upload the <abbr title="Comma Separated Values">CSV</abbr> file with metis codes.'),
@@ -30,7 +28,7 @@ class MetisCodesCSVForm extends MetisCodesForm {
       '#upload_validators' => [
         'file_validate_extensions' => ['csv'],
       ],
-    );
+    ];
 
     $form = parent::buildForm($form, $form_state);
     unset($form['codes']);
