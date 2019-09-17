@@ -160,7 +160,7 @@ function metis_get_unused() {
  */
 function metis_set_used($code_public, $nid) {
   // Check if code has 32 characters and nid is present.
-  if (Unicode::strlen($code_public) == 32 && is_numeric($nid)) {
+  if (mb_strlen($code_public) == 32 && is_numeric($nid)) {
 
     // Update database and set used codes as used.
     try {

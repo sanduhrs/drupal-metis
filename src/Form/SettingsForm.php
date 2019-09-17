@@ -4,11 +4,13 @@ namespace Drupal\metis\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerTrait;
 
 /**
  * Configure Metis settings for this site.
  */
 class SettingsForm extends ConfigFormBase {
+  use MessengerTrait;
 
   /**
    * {@inheritdoc}
@@ -34,12 +36,12 @@ class SettingsForm extends ConfigFormBase {
 
     // Display warning if no Metis field is configured.
     if (!isset($field_map['node'])) {
-      drupal_set_message(t('There is no Metis field configured. Please add a field of the type <em>Metis</em> to at least one content type to make this module work.'), 'error');
+      $this->messenger()->addStatus($this->t('There is no Metis field configured. Please add a field of the type <em>Metis</em> to at least one content type to make this module work.'));
     }
 
     // Display warning if no unused codes left.
     if (metis_count_unused() == 0) {
-      drupal_set_message($this->t('There are no unused codes left. Please add some.'), 'error');
+      $this->messenger()->addError($this->t('There are no unused codes left. Please add some.'));
     }
 
     $form['metis_default_server'] = [

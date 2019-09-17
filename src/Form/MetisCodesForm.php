@@ -78,8 +78,8 @@ class MetisCodesForm extends ConfigFormBase {
 
       // Prepare array for validation.
       $codes[] = [
-        'public' => SafeMarkup::checkPlain(trim($items[0])),
-        'private' => SafeMarkup::checkPlain(trim($items[1])),
+        'public' => trim($items[0]),
+        'private' => trim($items[1]),
         'server' => $form_state['values']['server'],
       ];
     }
@@ -158,11 +158,11 @@ class MetisCodesForm extends ConfigFormBase {
             $codes_validated['code_exists'][] = $code;
           }
           // Error if public metis code is too long.
-          elseif (Unicode::strlen($code['public']) != 32) {
+          elseif (mb_strlen($code['public']) != 32) {
             $codes_validated['public_length'][] = $code;
           }
           // Error if private metis code is too long.
-          elseif ($code['private'] && Unicode::strlen($code['private']) != 32) {
+          elseif ($code['private'] && mb_strlen($code['private']) != 32) {
             $codes_validated['private_length'][] = $code;
           }
           // Error if server doesn't match.
