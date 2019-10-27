@@ -1,3 +1,7 @@
+Project moved
+-------------
+
+The GitHub repo is abandoned. Further development takes place at https://www.drupal.org/project/metis
 
 Metis
 -----
