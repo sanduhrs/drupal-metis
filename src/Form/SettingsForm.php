@@ -64,7 +64,7 @@ class SettingsForm extends ConfigFormBase {
     $form['metis_force_ssl'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Use SSL to include Metis codes'),
-      '#description' => $this->t('Activate this option if you wish to use a secure connection (SSL) to include Metis codes. In that case the server ssl-vg03.met.vgwort.de will be used.'),
+      '#description' => $this->t('Activate this option if you wish to use a secure connection (SSL) to include Metis codes.'),
       '#default_value' => $this->config('metis.settings')->get('metis_force_ssl'),
     ];
     $form['status'] = [
