@@ -1,0 +1,15 @@
+{
+    "name": "drupal/metis",
+    "description": "Includes the Metis pixel for VG Wort counts.",
+    "type": "drupal-module",
+    "license": "GPL-2-or-later",
+    "authors": [
+        {
+            "name": "Stefan Auditor",
+            "email": "stefan@auditor.email"
+        }
+    ],
+    "require": {
+        "sanduhrs/metis-soap-client": "^1.0"
+    }
+}
