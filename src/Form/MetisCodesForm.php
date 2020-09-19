@@ -10,6 +10,7 @@ use Drupal\Core\Messenger\MessengerTrait;
  * Configure Metis settings for this site.
  */
 class MetisCodesForm extends ConfigFormBase {
+
   use MessengerTrait;
 
   /**

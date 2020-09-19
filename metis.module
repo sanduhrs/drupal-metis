@@ -5,7 +5,6 @@
  * Primary module hooks for Metis module.
  */
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -53,58 +52,6 @@ function metis_theme() {
 }
 
 /**
- * Prepares variables for metis_codes template.
- *
- * Default template: metis_codes.html.twig.
- *
- * @param array $variables
- *   An associative array containing:
- *   - foo: Foo variable description.
- */
-function template_preprocess_metis_codes(array &$variables) {
-  $variables['foo'] = 'bar';
-}
-
-/**
- * Prepares variables for metis_code_public template.
- *
- * Default template: metis_code_public.html.twig.
- *
- * @param array $variables
- *   An associative array containing:
- *   - foo: Foo variable description.
- */
-function template_preprocess_metis_code_public(array &$variables) {
-  $variables['foo'] = 'bar';
-}
-
-/**
- * Prepares variables for metis_code_private template.
- *
- * Default template: metis_code_private.html.twig.
- *
- * @param array $variables
- *   An associative array containing:
- *   - foo: Foo variable description.
- */
-function template_preprocess_metis_code_private(array &$variables) {
-  $variables['foo'] = 'bar';
-}
-
-/**
- * Prepares variables for metis_show template.
- *
- * Default template: metis_show.html.twig.
- *
- * @param array $variables
- *   An associative array containing:
- *   - foo: Foo variable description.
- */
-function template_preprocess_metis_show(array &$variables) {
-  $variables['foo'] = 'bar';
-}
-
-/**
  * Count unused codes.
  */
 function metis_count_unused() {
@@ -115,13 +62,15 @@ function metis_count_unused() {
     ->addField('m', 'code_public');
 
   $count_query = $query->countQuery();
-  $num_rows = $count_query->countQuery()->execute()->fetchField();
-
-  return $num_rows;
+  return $count_query->countQuery()->execute()
+    ->fetchField();
 }
 
 /**
  * Get unused code.
+ *
+ * @return array|false
+ *   An code array or false.
  */
 function metis_get_unused() {
   $connection = \Drupal::database();
@@ -157,6 +106,14 @@ function metis_get_unused() {
 
 /**
  * Set code used.
+ *
+ * @param $code_public
+ *   The public code.
+ * @param $nid
+ *   The node id.
+ *
+ * @return bool
+ *   Return true on success, false on failure.
  */
 function metis_set_used($code_public, $nid) {
   // Check if code has 32 characters and nid is present.

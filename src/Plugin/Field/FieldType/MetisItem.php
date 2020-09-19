@@ -59,9 +59,8 @@ class MetisItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function getConstraints() {
-    $constraints = parent::getConstraints();
     // @todo Add more constrains here.
-    return $constraints;
+    return parent::getConstraints();
   }
 
   /**
@@ -87,11 +86,10 @@ class MetisItem extends FieldItemBase {
       ],
     ];
 
-    $schema = [
+    return [
       'columns' => $columns,
       // @DCG Add indexes here if necessary.
     ];
-    return $schema;
   }
 
   /**

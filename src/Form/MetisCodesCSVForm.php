@@ -39,7 +39,6 @@ class MetisCodesCSVForm extends MetisCodesForm {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $codes = [];
     // Attempt to save the uploaded file.
     $files = file_save_upload(
       'file_csv',
