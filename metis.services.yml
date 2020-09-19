@@ -1,0 +1,4 @@
+services:
+  metis.metis_soap:
+    class: Drupal\metis\MetisSoapService
+    arguments: ['@config.factory']
